@@ -18,6 +18,8 @@ xmlns:vlc="using:VLC"
 </vlc:MediaElement>
 ```
 
+![VLC.MediaElement screenshot](http://freemiupnp.fr/tv/VLC.MediaElement.png)
+
 ## Download
 [![NuGet](https://img.shields.io/nuget/v/VLC.MediaElement.svg)](https://www.nuget.org/packages/VLC.MediaElement)
 
