@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>VLC.MediaElement</id>
+    <version>0.9.0</version>
+    <authors>Stéphane Mitermite</authors>
+    <owners>Stéphane Mitermite</owners>
+    <licenseUrl>https://github.com/kakone/VLC.MediaElement/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/kakone/VLC.MediaElement</projectUrl>
+    <description>MediaElement clone powered by VLC</description>
+    <releaseNotes>Initial commit</releaseNotes>
+    <copyright>copyright © 2016 Stéphane Mitermite</copyright>
+    <tags>vlc libvlc mediaelement player video audio</tags>
+    <dependencies>
+      <dependency id="libVLCX" version="[0.9,1.0)" />
+    </dependencies>
+    <contentFiles>
+        <files include="**/*" buildAction="None" copyToOutput="true" flatten="true" />
+    </contentFiles>
+  </metadata>
+  <files>
+    <file src="VLC.MediaElement.targets" target="build\uap10.0" />  
+    <file src="bin\Release\VLC.pri" target="lib\uap10.0" />
+    <file src="bin\Release\VLC.winmd" target="lib\uap10.0" />
+    <file src="bin\Release\VLC\**" target="lib\uap10.0\VLC" />
+    <file src="NotoSans-Regular.ttf" target="contentFiles\any\any" />
+  </files>
+</package>
