@@ -1,7 +1,7 @@
 # VLC.MediaElement 
 MediaElement clone powered by VLC.
 
-It's a x86 and x64 Windows Runtime Component (the ARM version will be added soon).
+It's just a little control (a x86 and x64 Windows Runtime Component - the ARM version will be added soon), all the hard work is done by [VLC](https://code.videolan.org/videolan/vlc-winrt). So, thanks to the VLC team !
 
 ## Usage
 Add [the NuGet package](https://www.nuget.org/packages/VLC.MediaElement) to your project and use it as the classic [MediaElement](https://msdn.microsoft.com/library/windows/apps/mt187272.aspx) :
