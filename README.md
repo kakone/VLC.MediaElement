@@ -1,4 +1,4 @@
-# VLC.MediaElement
+# VLC.MediaElement (Windows Runtime Component)
 MediaElement clone powered by VLC
 
 ## Usage
