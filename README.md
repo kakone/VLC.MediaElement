@@ -23,7 +23,7 @@ xmlns:vlc="using:VLC"
 ![VLC.MediaElement screenshot](http://freemiupnp.fr/tv/VLC.MediaElement.png)
 
 ## Added properties
-There is some added properties compared to the classic MediaElement :
+There are some added properties compared to the classic MediaElement :
 - HardwareAcceleration : a value indicating whether the hardware acceleration must be used or not.
 - DeinterlaceMode : the deinterlace mode (Bob, Mean, Linear, X, Yadif, Yadif2x, ...) - only works if HardwareAcceleration is set to false.
 
