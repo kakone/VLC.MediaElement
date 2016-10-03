@@ -513,7 +513,7 @@ namespace VLC
         private void OnPointerMoved(object sender, RoutedEventArgs e)
         {
             Show();
-            if (e.OriginalSource == sender)
+            if (e.OriginalSource == sender || e.OriginalSource is FrameworkElement && ((FrameworkElement)e.OriginalSource).Name == "ControlPanelGrid")
             {
                 StartTimer();
             }

@@ -2,14 +2,15 @@
 <package>
   <metadata>
     <id>VLC.MediaElement</id>
-    <version>0.9.0</version>
+    <version>0.9.1</version>
     <authors>Stéphane Mitermite</authors>
     <owners>Stéphane Mitermite</owners>
     <licenseUrl>https://github.com/kakone/VLC.MediaElement/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/kakone/VLC.MediaElement</projectUrl>
+    <title>VLC.MediaElement for UWP</title>
     <description>MediaElement clone powered by VLC</description>
-    <releaseNotes>Initial commit</releaseNotes>
-    <copyright>copyright © 2016 Stéphane Mitermite</copyright>
+    <releaseNotes>Beta release. Requires Windows 10 Anniversary Edition and matching Windows SDK.</releaseNotes>
+    <copyright>Copyright © 2016 Stéphane Mitermite</copyright>
     <tags>vlc libvlc mediaelement player video audio</tags>
     <dependencies>
       <dependency id="libVLCX" version="[0.9,1.0)" />
