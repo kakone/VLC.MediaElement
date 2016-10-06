@@ -117,6 +117,12 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AspectRatio" xml:space="preserve">
+    <value>Proportions</value>
+  </data>
+  <data name="DeinterlaceFilter" xml:space="preserve">
+    <value>Filtre de désentrelacement</value>
+  </data>
   <data name="DeinterlaceMode_Blend" xml:space="preserve">
     <value>Fondu</value>
   </data>
@@ -150,7 +156,34 @@
   <data name="DeinterlaceMode_Yadif2x" xml:space="preserve">
     <value>Yadif (2x)</value>
   </data>
+  <data name="ExitFullScreen" xml:space="preserve">
+    <value>Quitter le mode plein écran</value>
+  </data>
+  <data name="FullScreen" xml:space="preserve">
+    <value>Plein écran</value>
+  </data>
+  <data name="Mute" xml:space="preserve">
+    <value>Muet</value>
+  </data>
   <data name="None" xml:space="preserve">
     <value>Aucun</value>
+  </data>
+  <data name="Pause" xml:space="preserve">
+    <value>Suspendre</value>
+  </data>
+  <data name="Play" xml:space="preserve">
+    <value>Lecture</value>
+  </data>
+  <data name="ShowAudioSelectionMenu" xml:space="preserve">
+    <value>Afficher le menu de sélection audio</value>
+  </data>
+  <data name="ShowClosedCaptionMenu" xml:space="preserve">
+    <value>Afficher le menu des sous-titres</value>
+  </data>
+  <data name="Stop" xml:space="preserve">
+    <value>Arrêter</value>
+  </data>
+  <data name="Volume" xml:space="preserve">
+    <value>Volume</value>
   </data>
 </root>

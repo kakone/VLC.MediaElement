@@ -82,6 +82,9 @@ namespace VLC
             }
         }
 
+        private FrameworkElement LeftSeparator { get; set; }
+        private FrameworkElement RightSeparator { get; set; }
+
         private Slider ProgressSlider { get; set; }
         private FrameworkElement TimeTextGrid { get; set; }
         private Slider VolumeSlider { get; set; }
@@ -108,6 +111,20 @@ namespace VLC
         {
             get { return _availableDeinterlaceModes ?? (_availableDeinterlaceModes = Enum.GetValues(typeof(DeinterlaceMode)).OfType<DeinterlaceMode>()); }
             set { _availableDeinterlaceModes = value; }
+        }
+
+        /// <summary>
+        /// Identifies the <see cref="CursorAutoHide"/> dependency property.
+        /// </summary>
+        internal static readonly DependencyProperty CursorAutoHideProperty = DependencyProperty.Register("CursorAutoHide", typeof(bool), typeof(MediaTransportControls),
+            new PropertyMetadata(false));
+        /// <summary>
+        /// Gets or sets a value that indicates whether the mouse cursor must be hidden automatically or not.
+        /// </summary>
+        public bool CursorAutoHide
+        {
+            get { return (bool)GetValue(CursorAutoHideProperty); }
+            set { SetValue(CursorAutoHideProperty, value); }
         }
 
         /// <summary>
@@ -329,18 +346,8 @@ namespace VLC
         {
             base.OnApplyTemplate();
 
-            var commandBar = GetTemplateChild("MediaControlsCommandBar") as CommandBar;
-            if (commandBar != null)
-            {
-                commandBar.Loaded += (sender, e) =>
-                {
-                    var moreButton = ((FrameworkElement)sender).FindDescendantByName("MoreButton");
-                    if (moreButton != null)
-                    {
-                        moreButton.Visibility = Visibility.Collapsed;
-                    }
-                };
-            }
+            LeftSeparator = GetTemplateChild("LeftSeparator") as FrameworkElement;
+            RightSeparator = GetTemplateChild("RightSeparator") as FrameworkElement;
 
             var rootGrid = GetTemplateChild("RootGrid") as FrameworkElement;
             if (rootGrid != null)
@@ -354,7 +361,13 @@ namespace VLC
                 AppBarButtonStyle = rootGrid.Resources["AppBarButtonStyle"] as Style;
             }
 
-            CommandBar = GetTemplateChild("MediaControlsCommandBar") as CommandBar;
+            var commandBar = GetTemplateChild("MediaControlsCommandBar") as CommandBar;
+            CommandBar = commandBar;
+            if (commandBar != null)
+            {
+                commandBar.LayoutUpdated += CommandBar_LayoutUpdated;
+            }
+
             ProgressSlider = GetTemplateChild("ProgressSlider") as Slider;
             if (ProgressSlider != null)
             {
@@ -408,8 +421,16 @@ namespace VLC
             SetButtonClick(ZoomButton, ZoomButton_Click);
             SetButtonClick(FullWindowButton, FullWindowButton_Click);
             SetButtonClick(StopButton, StopButton_Click);
-            SetButtonClick("AudioMuteButton", AudioMuteButton_Click);
+            var audioMuteButton = GetTemplateChild("AudioMuteButton");
+            SetButtonClick(audioMuteButton, AudioMuteButton_Click);
 
+            SetToolTip(DeinterlaceModeButton, "DeinterlaceFilter");
+            SetToolTip(ZoomButton, "AspectRatio");
+            SetToolTip("VolumeMuteButton", "Volume");
+            SetToolTip(audioMuteButton, "Mute");
+            SetToolTip("CCSelectionButton", "ShowClosedCaptionMenu");
+            SetToolTip("AudioTracksSelectionButton", "ShowAudioSelectionMenu");
+            SetToolTip(StopButton, "Stop");
 
             UpdateMediaTransportControlMode();
             UpdateSeekBarVisibility();
@@ -425,6 +446,35 @@ namespace VLC
             UpdateFullWindowState();
 
             Timer.Tick += Timer_Tick;
+        }
+
+        private void SetToolTip(DependencyObject element, string resource)
+        {
+            if (element != null)
+            {
+                ToolTipService.SetToolTip(element, ResourceLoader?.GetString(resource));
+            }
+        }
+
+        private void SetToolTip(string elementName, string resource)
+        {
+            SetToolTip(GetTemplateChild(elementName), resource);
+        }
+
+        private void CommandBar_LayoutUpdated(object sender, object e)
+        {
+            var leftSeparator = LeftSeparator;
+            var rightSeparator = RightSeparator;
+            if (leftSeparator == null || rightSeparator == null)
+            {
+                return;
+            }
+
+            var commandBar = CommandBar;
+            var width = commandBar.PrimaryCommands.Where(el => !(el is AppBarSeparator) && ((FrameworkElement)el).Visibility == Visibility.Visible).Sum(el => ((FrameworkElement)el).Width);
+            width = (commandBar.ActualWidth - width) / 2;
+            leftSeparator.Width = width;
+            rightSeparator.Width = width;
         }
 
         private void AddNoneItem(TracksMenu tracksMenu)
@@ -461,11 +511,6 @@ namespace VLC
             }
         }
 
-        private void SetButtonClick(string childName, RoutedEventHandler eventHandler)
-        {
-            SetButtonClick(GetTemplateChild(childName), eventHandler);
-        }
-
         private void StartTimer()
         {
             if (MediaElement?.State == MediaState.Playing)
@@ -481,11 +526,14 @@ namespace VLC
         {
             Timer.Stop();
             VisualStateManager.GoToState(this, "ControlPanelFadeIn", true);
-            var cursor = Cursor;
-            if (cursor != null && Window.Current.CoreWindow.PointerCursor != cursor)
+            if (CursorAutoHide)
             {
-                Window.Current.CoreWindow.PointerCursor = cursor;
-                Cursor = null;
+                var cursor = Cursor;
+                if (cursor != null && Window.Current.CoreWindow.PointerCursor != cursor)
+                {
+                    Window.Current.CoreWindow.PointerCursor = cursor;
+                    Cursor = null;
+                }
             }
         }
 
@@ -493,11 +541,14 @@ namespace VLC
         {
             Timer.Stop();
             VisualStateManager.GoToState(this, "ControlPanelFadeOut", true);
-            if (Cursor == null)
+            if (CursorAutoHide)
             {
-                Cursor = Window.Current.CoreWindow.PointerCursor;
+                if (Cursor == null)
+                {
+                    Cursor = Window.Current.CoreWindow.PointerCursor;
+                }
+                Window.Current.CoreWindow.PointerCursor = null;
             }
-            Window.Current.CoreWindow.PointerCursor = null;
         }
 
         private void Grid_PointerMoved(object sender, PointerRoutedEventArgs e)
@@ -554,6 +605,7 @@ namespace VLC
                 case MediaState.Paused:
                 case MediaState.Stopped:
                 case MediaState.Error:
+                case MediaState.NothingSpecial:
                     MediaElement.Play();
                     break;
                 default:
@@ -696,10 +748,10 @@ namespace VLC
         /// <param name="trackName">track name</param>
         internal void OnTrackAdded(TrackType trackType, int trackId, string trackName)
         {
-            AddTrack(GetTracksMenu(trackType), trackId, trackName);
+            AddTrack(GetTracksMenu(trackType), trackId, trackName, trackType == TrackType.Subtitle);
         }
 
-        private void AddTrack(TracksMenu tracksMenu, int? trackId, string trackName)
+        private void AddTrack(TracksMenu tracksMenu, int? trackId, string trackName, bool subTitle = false)
         {
             if (tracksMenu == null)
             {
@@ -719,7 +771,7 @@ namespace VLC
             {
                 case 2:
                     var firstMenuItem = (menuItems.FirstOrDefault() as ToggleMenuFlyoutItem);
-                    if (firstMenuItem?.Tag != null)
+                    if (subTitle || firstMenuItem?.Tag != null)
                     {
                         firstMenuItem.IsChecked = true;
                     }
@@ -850,7 +902,9 @@ namespace VLC
 
         private void UpdateFullWindowState()
         {
-            VisualStateManager.GoToState(this, ApplicationView.GetForCurrentView().IsFullScreenMode ? "FullWindowState" : "NonFullWindowState", true);
+            var fullScreen = ApplicationView.GetForCurrentView().IsFullScreenMode;
+            SetToolTip(FullWindowButton, fullScreen ? "ExitFullScreen" : "FullScreen");
+            VisualStateManager.GoToState(this, fullScreen ? "FullWindowState" : "NonFullWindowState", true);
         }
 
         private void FullWindowButton_Click(object sender, RoutedEventArgs e)
@@ -889,22 +943,25 @@ namespace VLC
         /// <param name="state">state of the media element</param>
         internal void UpdateState(MediaElementState state)
         {
-            string statusStateName, playPauseStateName;
+            string statusStateName, playPauseStateName, playPauseToolTip;
             switch (state)
             {
                 case MediaElementState.Closed:
                 case MediaElementState.Stopped:
                     statusStateName = "Disabled";
                     playPauseStateName = "PlayState";
+                    playPauseToolTip = "Play";
                     Clear();
                     break;
                 case MediaElementState.Paused:
                     statusStateName = "Disabled";
                     playPauseStateName = "PlayState";
+                    playPauseToolTip = "Play";
                     break;
                 case MediaElementState.Buffering:
                     statusStateName = "Buffering";
                     playPauseStateName = null;
+                    playPauseToolTip = null;
                     break;
                 case MediaElementState.Playing:
                     Timer.Start();
@@ -912,11 +969,13 @@ namespace VLC
                 default:
                     statusStateName = "Normal";
                     playPauseStateName = "PauseState";
+                    playPauseToolTip = "Pause";
                     break;
             }
             VisualStateManager.GoToState(this, statusStateName, true);
             if (playPauseStateName != null)
             {
+                SetToolTip(PlayPauseButton, playPauseToolTip);
                 VisualStateManager.GoToState(this, playPauseStateName, true);
             }
 
