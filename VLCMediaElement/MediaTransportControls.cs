@@ -84,7 +84,7 @@ namespace VLC
 
         private FrameworkElement LeftSeparator { get; set; }
         private FrameworkElement RightSeparator { get; set; }
-
+        private FrameworkElement ControlPanelGrid { get; set; }
         private Slider ProgressSlider { get; set; }
         private FrameworkElement TimeTextGrid { get; set; }
         private Slider VolumeSlider { get; set; }
@@ -368,6 +368,8 @@ namespace VLC
                 commandBar.LayoutUpdated += CommandBar_LayoutUpdated;
             }
 
+            ControlPanelGrid = GetTemplateChild("ControlPanelGrid") as FrameworkElement;
+
             ProgressSlider = GetTemplateChild("ProgressSlider") as Slider;
             if (ProgressSlider != null)
             {
@@ -431,6 +433,8 @@ namespace VLC
             SetToolTip("CCSelectionButton", "ShowClosedCaptionMenu");
             SetToolTip("AudioTracksSelectionButton", "ShowAudioSelectionMenu");
             SetToolTip(StopButton, "Stop");
+            SetToolTip(PlayPauseButton, "Play");
+            SetToolTip(PlayPauseButtonOnLeft, "Play");
 
             UpdateMediaTransportControlMode();
             UpdateSeekBarVisibility();
@@ -473,8 +477,11 @@ namespace VLC
             var commandBar = CommandBar;
             var width = commandBar.PrimaryCommands.Where(el => !(el is AppBarSeparator) && ((FrameworkElement)el).Visibility == Visibility.Visible).Sum(el => ((FrameworkElement)el).Width);
             width = (commandBar.ActualWidth - width) / 2;
-            leftSeparator.Width = width;
-            rightSeparator.Width = width;
+            if (leftSeparator.Width != width)
+            {
+                leftSeparator.Width = width;
+                rightSeparator.Width = width;
+            }
         }
 
         private void AddNoneItem(TracksMenu tracksMenu)
@@ -564,9 +571,27 @@ namespace VLC
         private void OnPointerMoved(object sender, RoutedEventArgs e)
         {
             Show();
-            if (e.OriginalSource == sender || e.OriginalSource is FrameworkElement && ((FrameworkElement)e.OriginalSource).Name == "ControlPanelGrid")
+            if (e.OriginalSource == sender || e.OriginalSource == ControlPanelGrid)
             {
                 StartTimer();
+            }
+            else
+            {
+                var controlPanelGrid = ControlPanelGrid;
+                if (controlPanelGrid != null && e.OriginalSource is Panel)
+                {
+                    var renderSize = controlPanelGrid.RenderSize;
+                    var currentWindow = Window.Current;
+                    var bounds = currentWindow.Bounds;
+                    var pointerPosition = currentWindow.CoreWindow.PointerPosition;
+                    pointerPosition = new Point(pointerPosition.X - bounds.X, pointerPosition.Y - bounds.Y);
+                    var controlPanelGridPosition = controlPanelGrid.TransformToVisual(currentWindow.Content).TransformPoint(new Point(0, 0));
+                    if (pointerPosition.X >= controlPanelGridPosition.X && pointerPosition.X < controlPanelGridPosition.X + renderSize.Width &&
+                    pointerPosition.Y >= controlPanelGridPosition.Y && pointerPosition.Y < controlPanelGridPosition.Y + renderSize.Height)
+                    {
+                        StartTimer();
+                    }
+                }
             }
         }
 
@@ -976,6 +1001,7 @@ namespace VLC
             if (playPauseStateName != null)
             {
                 SetToolTip(PlayPauseButton, playPauseToolTip);
+                SetToolTip(PlayPauseButtonOnLeft, playPauseToolTip);
                 VisualStateManager.GoToState(this, playPauseStateName, true);
             }
 

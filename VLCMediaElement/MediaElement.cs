@@ -208,6 +208,32 @@ namespace VLC
         }
 
         /// <summary>
+        /// Identifies the <see cref="PosterSource"/> dependency property.
+        /// </summary>
+        internal static readonly DependencyProperty PosterSourceProperty = DependencyProperty.Register("PosterSource", typeof(ImageSource), typeof(MediaElement), new PropertyMetadata(null));
+        /// <summary>
+        /// Gets or sets the image source that is used for a placeholder image during MediaElement loading transition states.
+        /// </summary>
+        public ImageSource PosterSource
+        {
+            get { return (ImageSource)GetValue(PosterSourceProperty); }
+            set { SetValue(PosterSourceProperty, value); }
+        }
+
+        /// <summary>
+        /// Identifies the <see cref="Stretch"/> dependency property.
+        /// </summary>
+        internal static readonly DependencyProperty StretchProperty = DependencyProperty.Register("Stretch", typeof(Stretch), typeof(MediaElement), new PropertyMetadata(Stretch.Uniform));
+        /// <summary>
+        /// Gets or sets a value that describes how an MediaElement should be stretched to fill the destination rectangle.
+        /// </summary>
+        public Stretch Stretch
+        {
+            get { return (Stretch)GetValue(StretchProperty); }
+            set { SetValue(StretchProperty, value); }
+        }
+
+        /// <summary>
         /// Invoked whenever application code or internal processes (such as a rebuildinglayout pass) call ApplyTemplate. 
         /// In simplest terms, this means the method is called just before a UI element displays in your app.
         /// Override this method to influence the default post-template logic of a class.
@@ -366,7 +392,8 @@ namespace VLC
 
         private async Task UpdateZoom()
         {
-            if (!Zoom)
+            if ((Stretch == Stretch.None || Stretch == Stretch.Uniform) && !Zoom ||
+                (Stretch == Stretch.Fill || Stretch == Stretch.UniformToFill && Zoom))
             {
                 if (SwapChainPanel.RenderTransform != null)
                 {
