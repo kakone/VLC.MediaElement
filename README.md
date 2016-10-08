@@ -24,15 +24,16 @@ xmlns:vlc="using:VLC"
 
 ## Added properties
 There are some added properties compared to the classic MediaElement :
-- HardwareAcceleration : a value indicating whether the hardware acceleration must be used or not.
 - DeinterlaceMode : the deinterlace mode (Bob, Mean, Linear, X, Yadif, Yadif2x, ...) - only works if HardwareAcceleration is set to false.
+- HardwareAcceleration : a value indicating whether the hardware acceleration must be used or not.
 
 On VLC.MediaTransportControls :
-- Content : you can add some content over the video.
 - AvailableDeinterlaceModes : the deinterlace modes to show in the deinterlace menu.
-- IsDeinterlaceModeButtonVisible : a value that indicates whether the deinterlace mode button must be shown or not.
-- IsDeinterlaceModeButtonEnabled : a value that indicates whether the user can choose a deinterlace mode.
+- Content : you can add some content over the video.
 - ControlPanelOpacity : it's more beautiful when the control panel is not opaque :)
+- CursorAutoHide : a value that indicates whether the mouse cursor must be hidden automatically or not.
+- IsDeinterlaceModeButtonEnabled : a value that indicates whether the user can choose a deinterlace mode.
+- IsDeinterlaceModeButtonVisible : a value that indicates whether the deinterlace mode button must be shown or not.
 
 ## Download
 [![NuGet](https://img.shields.io/nuget/v/VLC.MediaElement.svg)](https://www.nuget.org/packages/VLC.MediaElement)
