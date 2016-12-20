@@ -477,7 +477,7 @@ namespace VLC
             var commandBar = CommandBar;
             var width = commandBar.PrimaryCommands.Where(el => !(el is AppBarSeparator) && ((FrameworkElement)el).Visibility == Visibility.Visible).Sum(el => ((FrameworkElement)el).Width);
             width = (commandBar.ActualWidth - width) / 2;
-            if (leftSeparator.Width != width)
+            if (width >= 0 && leftSeparator.Width != width)
             {
                 leftSeparator.Width = width;
                 rightSeparator.Width = width;

@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.Media.Devices;
+using Windows.Storage;
 using Windows.UI.Core;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
@@ -245,6 +246,7 @@ namespace VLC
             var swapChainPanel = (SwapChainPanel)GetTemplateChild("SwapChainPanel");
             SwapChainPanel = swapChainPanel;
             swapChainPanel.Loaded += async (sender, e) => await Init(swapChainPanel);
+            swapChainPanel.CompositionScaleChanged += async (sender, e) => await UpdateScale();
             swapChainPanel.SizeChanged += async (sender, e) => await UpdateSize();
         }
 
@@ -331,15 +333,15 @@ namespace VLC
                     "--verbose=3",
                     "--no-stats",
                     "--avcodec-fast",
-                    $"--freetype-font={Package.Current.InstalledLocation.Path}\\NotoSans-Regular.ttf",
                     "--subsdec-encoding",
                     "",
-                    "--aout=winstore"
+                    "--aout=winstore",
+                    string.Format("--keystore-file={0}\\keystore", ApplicationData.Current.LocalFolder.Path),
                 }, swapChainPanel);
 #if DEBUG
             Instance.logSet((param0, param1) => Debug.WriteLine($"[VLC {(LogLevel)param0}] {param1}"));
 #endif
-            await UpdateSize();
+            await UpdateScale();
             UpdateDeinterlaceMode();
 
             AudioDeviceId = MediaDevice.GetDefaultAudioRenderId(AudioDeviceRole.Default);
@@ -447,8 +449,16 @@ namespace VLC
 
         private async Task UpdateSize()
         {
-            Instance?.UpdateSize((float)SwapChainPanel.ActualWidth, (float)(SwapChainPanel.ActualHeight));
+            var scp = SwapChainPanel;
+            Instance?.UpdateSize((float)(scp.ActualWidth * scp.CompositionScaleX), (float)(scp.ActualHeight * scp.CompositionScaleY));
             await UpdateZoom();
+        }
+
+        private async Task UpdateScale()
+        {
+            var scp = SwapChainPanel;
+            Instance.UpdateScale(scp.CompositionScaleX, scp.CompositionScaleY);
+            await UpdateSize();
         }
 
         private void SetAudioDevice()
