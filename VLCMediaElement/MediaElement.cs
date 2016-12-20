@@ -235,6 +235,20 @@ namespace VLC
         }
 
         /// <summary>
+        /// Identifies the <see cref="Options"/> dependency property.
+        /// </summary>
+        internal static readonly DependencyProperty OptionsProperty = DependencyProperty.Register("Options", typeof(IDictionary<string, object>), typeof(MediaElement),
+            new PropertyMetadata(null));
+        /// <summary>
+        /// Gets or sets the options for the media
+        /// </summary>
+        public IDictionary<string, object> Options
+        {
+            get { return (IDictionary<string, object>)GetValue(OptionsProperty); }
+            set { SetValue(OptionsProperty, value); }
+        }
+
+        /// <summary>
         /// Invoked whenever application code or internal processes (such as a rebuildinglayout pass) call ApplyTemplate. 
         /// In simplest terms, this means the method is called just before a UI element displays in your app.
         /// Override this method to influence the default post-template logic of a class.
@@ -497,6 +511,14 @@ namespace VLC
             var media = new Media(Instance, source.IsAbsoluteUri ? source.AbsoluteUri : Path.Combine(Package.Current.InstalledLocation.Path, source.AbsoluteUri), source.IsFile ? FromType.FromPath : FromType.FromLocation);
             media.addOption($":avcodec-hw={(HardwareAcceleration ? "d3d11va" : "none")}");
             media.addOption($":avcodec-threads={Convert.ToInt32(HardwareAcceleration)}");
+            var options = Options;
+            if (options != null)
+            {
+                foreach (var option in options)
+                {
+                    media.addOption($":{option.Key}={option.Value}");
+                }
+            }
             Media = media;
 
             var mediaPlayer = new MediaPlayer(media);
