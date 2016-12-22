@@ -29,6 +29,7 @@ There are some added properties compared to the classic MediaElement :
 - Options : a dictionary to add some options to the media (see [VLC command-line help](https://wiki.videolan.org/VLC_command-line_help/)). This property must be defined before setting the source.
 
 On VLC.MediaTransportControls :
+- AutoHide : a value that indicates whether the media transport controls must be hidden automatically or not.
 - AvailableDeinterlaceModes : the deinterlace modes to show in the deinterlace menu.
 - Content : you can add some content over the video.
 - ControlPanelOpacity : it's more beautiful when the control panel is not opaque :)
