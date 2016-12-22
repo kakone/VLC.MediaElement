@@ -26,6 +26,7 @@ xmlns:vlc="using:VLC"
 There are some added properties compared to the classic MediaElement :
 - DeinterlaceMode : the deinterlace mode (Bob, Mean, Linear, X, Yadif, Yadif2x, ...) - only works if HardwareAcceleration is set to false.
 - HardwareAcceleration : a value indicating whether the hardware acceleration must be used or not.
+- Options : a dictionary to add some options to the media (see [VLC command-line help](https://wiki.videolan.org/VLC_command-line_help/)). This property must be defined before setting the source.
 
 On VLC.MediaTransportControls :
 - AvailableDeinterlaceModes : the deinterlace modes to show in the deinterlace menu.
