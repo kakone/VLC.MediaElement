@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
+using Windows.Foundation.Diagnostics;
 using Windows.Media.Devices;
 using Windows.Storage;
 using Windows.UI.Core;
@@ -39,6 +40,21 @@ namespace VLC
         public event RoutedEventHandler CurrentStateChanged;
 
         /// <summary>
+        /// Occurs when a login dialog box must be shown.
+        /// </summary>
+        public event EventHandler<LoginDialogEventArgs> ShowLoginDialog;
+
+        /// <summary>
+        /// Occurs when a dialog box must be shown.
+        /// </summary>
+        public event EventHandler<DialogEventArgs> ShowDialog;
+
+        /// <summary>
+        /// Occurs when the current dialog box must be cancelled.
+        /// </summary>
+        public event EventHandler<DeferrableEventArgs> CancelCurrentDialog;
+
+        /// <summary>
         /// Instantiates a new instance of the MediaElement class.
         /// </summary>
         public MediaElement()
@@ -51,6 +67,7 @@ namespace VLC
         private MediaPlayer MediaPlayer { get; set; }
         private Media Media { get; set; }
         private AudioDeviceHandler AudioDevice { get; set; }
+        private LoggingSession LoggingSession { get; set; }
 
         private string _audioDeviceId;
         private string AudioDeviceId
@@ -65,6 +82,16 @@ namespace VLC
                 }
             }
         }
+
+        /// <summary>
+        /// Gets or sets the keystore filename
+        /// </summary>
+        public string KeyStoreFilename { get; set; } = "VLC_MediaElement_KeyStore";
+
+        /// <summary>
+        /// Gets or sets the log filename
+        /// </summary>
+        public string LogFilename { get; set; } = "VLC_MediaElement_Log.etl";
 
         /// <summary>
         /// Gets the current state.
@@ -339,7 +366,7 @@ namespace VLC
 
         private async Task Init(SwapChainPanel swapChainPanel)
         {
-            Instance = new Instance(new List<string>
+            var instance = new Instance(new List<string>
                 {
                     "-I",
                     "dummy",
@@ -350,11 +377,24 @@ namespace VLC
                     "--subsdec-encoding",
                     "",
                     "--aout=winstore",
-                    string.Format("--keystore-file={0}\\keystore", ApplicationData.Current.LocalFolder.Path),
+                    $"--keystore-file={Path.Combine(ApplicationData.Current.LocalFolder.Path, KeyStoreFilename)}"
                 }, swapChainPanel);
-#if DEBUG
-            Instance.logSet((param0, param1) => Debug.WriteLine($"[VLC {(LogLevel)param0}] {param1}"));
-#endif
+            Instance = instance;
+            instance.setDialogHandlers(OnError, OnShowLoginDialog, OnShowDialog,
+                (dialog, title, text, intermediate, position, cancel) => { },
+                OnCancelCurrentDialog,
+                (dialog, position, text) => { });
+            var loggingSession = new LoggingSession("VLC.MediaElement");
+            var loggingChannel = new LoggingChannel("VLC", new LoggingChannelOptions());
+            loggingSession.AddLoggingChannel(loggingChannel);
+            LoggingSession = loggingSession;
+            instance.logSet((param0, param1) =>
+                {
+                    var logLevel = (LogLevel)param0;
+                    Debug.WriteLine($"[VLC {logLevel}] {param1}");
+                    loggingChannel.LogMessage(param1, logLevel.ToLoggingLevel());
+                });
+
             await UpdateScale();
             UpdateDeinterlaceMode();
 
@@ -362,6 +402,80 @@ namespace VLC
             MediaDevice.DefaultAudioRenderDeviceChanged += (sender, e) => { if (e.Role == AudioDeviceRole.Default) { AudioDeviceId = e.Id; } };
 
             OnSourceChanged();
+        }
+
+        private async void OnError(string title, string text)
+        {
+            await DispatcherRunAsync(() => TransportControls?.SetError($"{title}{Environment.NewLine}{text}"));
+            try
+            {
+                await LoggingSession.SaveToFileAsync(ApplicationData.Current.LocalFolder, LogFilename);
+            }
+            catch (Exception) { }
+        }
+
+        private async void OnShowLoginDialog(Dialog dialog, string title, string text, string defaultUserName, bool askToStore)
+        {
+            LoginDialogResult dialogResult;
+            var showLoginDialog = ShowLoginDialog;
+            if (showLoginDialog == null)
+            {
+                dialogResult = null;
+            }
+            else
+            {
+                var loginEventArgs = new LoginDialogEventArgs(title, text, defaultUserName, askToStore);
+                showLoginDialog(this, loginEventArgs);
+                await loginEventArgs.WaitForDeferralsAsync();
+                dialogResult = loginEventArgs.DialogResult;
+            }
+
+            if (dialogResult == null)
+            {
+                dialog.dismiss();
+            }
+            else
+            {
+                dialog.postLogin(dialogResult.Username, dialogResult.Password, dialogResult.StoreCredentials);
+            }
+        }
+
+        private async void OnShowDialog(Dialog dialog, string title, string text, Question qType, string cancel, string action1, string action2)
+        {
+            int? selectedActionIndex;
+            var showDialog = ShowDialog;
+            if (showDialog == null)
+            {
+                selectedActionIndex = null;
+            }
+            else
+            {
+                var dialogEventArgs = new DialogEventArgs(title, text, qType, cancel, action1, action2);
+                showDialog(this, dialogEventArgs);
+                await dialogEventArgs.WaitForDeferralsAsync();
+                selectedActionIndex = dialogEventArgs.SelectedActionIndex;
+            }
+
+            if (selectedActionIndex == null)
+            {
+                dialog.dismiss();
+            }
+            else
+            {
+                dialog.postAction((int)selectedActionIndex);
+            }
+        }
+
+        private async void OnCancelCurrentDialog(Dialog dialog)
+        {
+            var cancelCurrentDialog = CancelCurrentDialog;
+            if (cancelCurrentDialog != null)
+            {
+                var eventArgs = new DeferrableEventArgs();
+                cancelCurrentDialog(this, eventArgs);
+                await eventArgs.WaitForDeferralsAsync();
+            }
+            dialog.dismiss();
         }
 
         private async void EventManager_OnTrackAdded(TrackType trackType, int trackId)

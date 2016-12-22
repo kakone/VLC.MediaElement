@@ -26,12 +26,17 @@
     <PRIResource Include="Strings\en-US\Resources.resw" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DeferrableEventArgs.cs" />
     <Compile Include="DeinterlaceMode.cs" />
     <Compile Include="FrameworkElementExtensions.cs" />
+    <Compile Include="LoginDialogEventArgs.cs" />
+    <Compile Include="LoginDialogResult.cs" />
     <Compile Include="LogLevel.cs" />
+    <Compile Include="LogLevelExtensions.cs" />
     <Compile Include="MediaElement.cs" />
     <Compile Include="MediaTransportControls.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="DialogEventArgs.cs" />
     <Compile Include="TimeSpanExtensions.cs" />
     <Compile Include="TracksMenu.cs" />
   </ItemGroup>

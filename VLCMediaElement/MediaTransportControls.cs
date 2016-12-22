@@ -29,19 +29,31 @@ namespace VLC
             DefaultStyleKey = typeof(MediaTransportControls);
         }
 
-        /// <summary>
-        /// Gets or sets the media element.
-        /// </summary>
-        internal MediaElement MediaElement { get; set; }
+        private bool HasError { get; set; }
+        private bool Seekable { get; set; }
+        private TimeSpan Length { get; set; }
+        private TimeSpan Time { get; set; }
+        private Point? PreviousPointerPosition { get; set; }
+        private CoreCursor Cursor { get; set; }
+        private DispatcherTimer Timer { get; set; } = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(1.5) };
+        private IDictionary<TrackType, TracksMenu> TracksMenus { get; } = new Dictionary<TrackType, TracksMenu>();
 
-        /// <summary>
-        /// Gets the command bar.
-        /// </summary>
-        public CommandBar CommandBar { get; private set; }
-        /// <summary>
-        /// Gets the style of the bar buttons.
-        /// </summary>
-        public Style AppBarButtonStyle { get; private set; }
+        private FrameworkElement LeftSeparator { get; set; }
+        private FrameworkElement RightSeparator { get; set; }
+        private FrameworkElement ControlPanelGrid { get; set; }
+        private TextBlock ErrorTextBlock { get; set; }
+        private Slider ProgressSlider { get; set; }
+        private FrameworkElement TimeTextGrid { get; set; }
+        private Slider VolumeSlider { get; set; }
+        private FrameworkElement DeinterlaceModeButton { get; set; }
+        private FrameworkElement PlayPauseButton { get; set; }
+        private FrameworkElement PlayPauseButtonOnLeft { get; set; }
+        private FrameworkElement ZoomButton { get; set; }
+        private FrameworkElement FullWindowButton { get; set; }
+        private FrameworkElement StopButton { get; set; }
+        private TextBlock TimeElapsedTextBlock { get; set; }
+        private TextBlock TimeRemainingTextBlock { get; set; }
+        private MenuFlyout DeinterlaceModeMenu { get; set; }
 
         private ResourceLoader ResourceLoader
         {
@@ -57,10 +69,6 @@ namespace VLC
                 }
             }
         }
-
-        private bool Seekable { get; set; }
-        private TimeSpan Length { get; set; }
-        private TimeSpan Time { get; set; }
 
         private double Position
         {
@@ -82,26 +90,20 @@ namespace VLC
             }
         }
 
-        private FrameworkElement LeftSeparator { get; set; }
-        private FrameworkElement RightSeparator { get; set; }
-        private FrameworkElement ControlPanelGrid { get; set; }
-        private Slider ProgressSlider { get; set; }
-        private FrameworkElement TimeTextGrid { get; set; }
-        private Slider VolumeSlider { get; set; }
-        private FrameworkElement DeinterlaceModeButton { get; set; }
-        private FrameworkElement PlayPauseButton { get; set; }
-        private FrameworkElement PlayPauseButtonOnLeft { get; set; }
-        private FrameworkElement ZoomButton { get; set; }
-        private FrameworkElement FullWindowButton { get; set; }
-        private FrameworkElement StopButton { get; set; }
-        private TextBlock TimeElapsedTextBlock { get; set; }
-        private TextBlock TimeRemainingTextBlock { get; set; }
-        private MenuFlyout DeinterlaceModeMenu { get; set; }
-        private IDictionary<TrackType, TracksMenu> TracksMenus { get; } = new Dictionary<TrackType, TracksMenu>();
+        /// <summary>
+        /// Gets or sets the media element.
+        /// </summary>
+        internal MediaElement MediaElement { get; set; }
 
-        private Point? PreviousPointerPosition { get; set; }
-        private DispatcherTimer Timer { get; set; } = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(1.5) };
-        private CoreCursor Cursor { get; set; }
+        /// <summary>
+        /// Gets the command bar.
+        /// </summary>
+        public CommandBar CommandBar { get; private set; }
+
+        /// <summary>
+        /// Gets the style of the bar buttons.
+        /// </summary>
+        public Style AppBarButtonStyle { get; private set; }
 
         private IEnumerable<DeinterlaceMode> _availableDeinterlaceModes;
         /// <summary>
@@ -111,6 +113,20 @@ namespace VLC
         {
             get { return _availableDeinterlaceModes ?? (_availableDeinterlaceModes = Enum.GetValues(typeof(DeinterlaceMode)).OfType<DeinterlaceMode>()); }
             set { _availableDeinterlaceModes = value; }
+        }
+
+        /// <summary>
+        /// Identifies the <see cref="AutoHide"/> dependency property.
+        /// </summary>
+        internal static readonly DependencyProperty AutoHideProperty = DependencyProperty.Register("AutoHide", typeof(bool), typeof(MediaTransportControls),
+            new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).OnAutoHidePropertyChanged()));
+        /// <summary>
+        /// Gets or sets a value that indicates whether the media transport controls must be hidden automatically or not.
+        /// </summary>
+        public bool AutoHide
+        {
+            get { return (bool)GetValue(AutoHideProperty); }
+            set { SetValue(AutoHideProperty, value); }
         }
 
         /// <summary>
@@ -370,6 +386,8 @@ namespace VLC
 
             ControlPanelGrid = GetTemplateChild("ControlPanelGrid") as FrameworkElement;
 
+            ErrorTextBlock = GetTemplateChild("ErrorTextBlock") as TextBlock;
+
             ProgressSlider = GetTemplateChild("ProgressSlider") as Slider;
             if (ProgressSlider != null)
             {
@@ -518,9 +536,21 @@ namespace VLC
             }
         }
 
+        private void OnAutoHidePropertyChanged()
+        {
+            if (AutoHide)
+            {
+                StartTimer();
+            }
+            else
+            {
+                Show();
+            }
+        }
+
         private void StartTimer()
         {
-            if (MediaElement?.State == MediaState.Playing)
+            if (AutoHide && MediaElement?.State == MediaState.Playing)
             {
                 Timer.Start();
             }
@@ -973,7 +1003,7 @@ namespace VLC
             {
                 case MediaElementState.Closed:
                 case MediaElementState.Stopped:
-                    statusStateName = "Disabled";
+                    statusStateName = (HasError ? null : "Disabled");
                     playPauseStateName = "PlayState";
                     playPauseToolTip = "Play";
                     Clear();
@@ -989,7 +1019,7 @@ namespace VLC
                     playPauseToolTip = null;
                     break;
                 case MediaElementState.Playing:
-                    Timer.Start();
+                    StartTimer();
                     goto default;
                 default:
                     statusStateName = "Normal";
@@ -997,7 +1027,11 @@ namespace VLC
                     playPauseToolTip = "Pause";
                     break;
             }
-            VisualStateManager.GoToState(this, statusStateName, true);
+            if (statusStateName != null)
+            {
+                HasError = false;
+                VisualStateManager.GoToState(this, statusStateName, true);
+            }
             if (playPauseStateName != null)
             {
                 SetToolTip(PlayPauseButton, playPauseToolTip);
@@ -1007,6 +1041,23 @@ namespace VLC
 
             Show();
             StartTimer();
+        }
+
+        /// <summary>
+        /// Sets the error message
+        /// </summary>
+        /// <param name="error">error message</param>
+        internal void SetError(string error)
+        {
+            if (ErrorTextBlock != null)
+            {
+                ErrorTextBlock.Text = error;
+                if (!String.IsNullOrWhiteSpace(error))
+                {
+                    VisualStateManager.GoToState(this, "Error", true);
+                    HasError = true;
+                }
+            }
         }
 
         /// <summary>
