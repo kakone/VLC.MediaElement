@@ -1,7 +1,7 @@
 # VLC.MediaElement for UWP
 MediaElement clone powered by VLC.
 
-It's just a little control (a x86 and x64 Windows Runtime Component - the ARM version will be added soon), all the hard work is done by [VLC](https://code.videolan.org/videolan/vlc-winrt). So, thanks to the VLC team !
+It's just a little control (a Windows Runtime Component), all the hard work is done by [VLC](https://code.videolan.org/videolan/vlc-winrt). So, thanks to the VLC team !
 
 ## Usage
 Requires Windows 10 Anniversary Edition and matching Windows SDK.
