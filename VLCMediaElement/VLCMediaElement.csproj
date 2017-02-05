@@ -26,9 +26,11 @@
     <PRIResource Include="Strings\en-US\Resources.resw" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
     <Compile Include="DeferrableEventArgs.cs" />
     <Compile Include="DeinterlaceMode.cs" />
     <Compile Include="FrameworkElementExtensions.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="LoginDialogEventArgs.cs" />
     <Compile Include="LoginDialogResult.cs" />
     <Compile Include="LogLevel.cs" />

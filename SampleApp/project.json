@@ -1,6 +1,6 @@
 ﻿{
   "dependencies": {
-    "libVLCX": "0.9.2",
+    "libVLCX": "0.9.3",
     "Microsoft.NETCore.UniversalWindowsPlatform": "5.2.2"
   },
   "frameworks": {

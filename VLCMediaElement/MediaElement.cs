@@ -58,6 +58,7 @@ namespace VLC
         public MediaElement()
         {
             DefaultStyleKey = typeof(MediaElement);
+            Unloaded += (sender, e) => { Source = null; Logger.RemoveLoggingChannel(LoggingChannel); };
         }
 
         private SwapChainPanel SwapChainPanel { get; set; }
@@ -65,7 +66,7 @@ namespace VLC
         private MediaPlayer MediaPlayer { get; set; }
         private Media Media { get; set; }
         private AudioDeviceHandler AudioDevice { get; set; }
-        private LoggingSession LoggingSession { get; set; }
+        private LoggingChannel LoggingChannel { get; set; }
 
         private string _audioDeviceId;
         private string AudioDeviceId
@@ -364,6 +365,7 @@ namespace VLC
 
         private async Task Init(SwapChainPanel swapChainPanel)
         {
+            LoggingChannel = Logger.AddLoggingChannel(Name);
             var instance = new Instance(new List<string>
                 {
                     "-I",
@@ -382,15 +384,11 @@ namespace VLC
                 (dialog, title, text, intermediate, position, cancel) => { },
                 OnCancelCurrentDialog,
                 (dialog, position, text) => { });
-            var loggingSession = new LoggingSession("VLC.MediaElement");
-            var loggingChannel = new LoggingChannel("VLC", new LoggingChannelOptions());
-            loggingSession.AddLoggingChannel(loggingChannel);
-            LoggingSession = loggingSession;
             instance.logSet((param0, param1) =>
                 {
                     var logLevel = (LogLevel)param0;
                     Debug.WriteLine($"[VLC {logLevel}] {param1}");
-                    loggingChannel.LogMessage(param1, logLevel.ToLoggingLevel());
+                    LoggingChannel.LogMessage(param1, logLevel.ToLoggingLevel());
                 });
 
             await UpdateScale();
@@ -405,11 +403,7 @@ namespace VLC
         private async void OnError(string title, string text)
         {
             await DispatcherRunAsync(() => TransportControls?.SetError($"{title}{Environment.NewLine}{text}"));
-            try
-            {
-                await LoggingSession.SaveToFileAsync(ApplicationData.Current.LocalFolder, LogFilename);
-            }
-            catch (Exception) { }
+            try { await Logger.SaveToFileAsync(LogFilename); } catch (Exception) { }
         }
 
         private async void OnShowLoginDialog(Dialog dialog, string title, string text, string defaultUserName, bool askToStore)
