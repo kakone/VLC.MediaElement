@@ -1,7 +1,7 @@
 # VLC.MediaElement for UWP
 MediaElement clone powered by VLC.
 
-It's just a little control (a x86 and x64 Windows Runtime Component - the ARM version will be added soon), all the hard work is done by [VLC](https://code.videolan.org/videolan/vlc-winrt). So, thanks to the VLC team !
+It's just a little control (a Windows Runtime Component), all the hard work is done by [VLC](https://code.videolan.org/videolan/vlc-winrt). So, thanks to the VLC team !
 
 ## Usage
 Requires Windows 10 Anniversary Edition and matching Windows SDK.
@@ -29,12 +29,13 @@ There are some added properties compared to the classic MediaElement :
 - Options : a dictionary to add some options to the media (see [VLC command-line help](https://wiki.videolan.org/VLC_command-line_help/)). This property must be defined before setting the source.
 
 On VLC.MediaTransportControls :
+- AutoHide : indicates whether the media transport controls must be hidden automatically or not.
 - AvailableDeinterlaceModes : the deinterlace modes to show in the deinterlace menu.
 - Content : you can add some content over the video.
 - ControlPanelOpacity : it's more beautiful when the control panel is not opaque :)
-- CursorAutoHide : a value that indicates whether the mouse cursor must be hidden automatically or not.
-- IsDeinterlaceModeButtonEnabled : a value that indicates whether the user can choose a deinterlace mode.
-- IsDeinterlaceModeButtonVisible : a value that indicates whether the deinterlace mode button must be shown or not.
+- CursorAutoHide : indicates whether the mouse cursor must be hidden automatically or not.
+- IsDeinterlaceModeButtonEnabled : indicates whether the user can choose a deinterlace mode.
+- IsDeinterlaceModeButtonVisible : indicates whether the deinterlace mode button must be shown or not.
 
 ## Download
 [![NuGet](https://img.shields.io/nuget/v/VLC.MediaElement.svg)](https://www.nuget.org/packages/VLC.MediaElement)
