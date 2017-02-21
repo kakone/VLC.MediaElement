@@ -614,7 +614,19 @@ namespace VLC
                 return;
             }
 
-            var media = new Media(Instance, source.IsAbsoluteUri ? source.AbsoluteUri : Path.Combine(Package.Current.InstalledLocation.Path, source.AbsoluteUri), source.IsFile ? FromType.FromPath : FromType.FromLocation);
+            string location;
+            FromType type;
+            if (source.IsFile)
+            {
+                location = (source.IsAbsoluteUri ? source.LocalPath : Path.Combine(Package.Current.InstalledLocation.Path, source.LocalPath));
+                type = FromType.FromPath;
+            }
+            else
+            {
+                location = source.AbsoluteUri;
+                type = FromType.FromLocation;
+            }
+            var media = new Media(Instance, location, type);
             media.addOption($":avcodec-hw={(HardwareAcceleration ? "d3d11va" : "none")}");
             media.addOption($":avcodec-threads={Convert.ToInt32(HardwareAcceleration)}");
             var options = Options;
