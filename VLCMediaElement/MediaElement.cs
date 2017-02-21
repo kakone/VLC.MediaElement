@@ -211,13 +211,13 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="Source"/> dependency property.
         /// </summary>
-        internal static readonly DependencyProperty SourceProperty = DependencyProperty.Register("Source", typeof(Uri), typeof(MediaElement), new PropertyMetadata(null, (d, e) => ((MediaElement)d).OnSourceChanged()));
+        internal static readonly DependencyProperty SourceProperty = DependencyProperty.Register("Source", typeof(string), typeof(MediaElement), new PropertyMetadata(null, (d, e) => ((MediaElement)d).OnSourceChanged()));
         /// <summary>
         /// Gets or sets a media source on the MediaElement.
         /// </summary>
-        public Uri Source
+        public string Source
         {
-            get { return (Uri)GetValue(SourceProperty); }
+            get { return GetValue(SourceProperty) as string; }
             set { SetValue(SourceProperty, value); }
         }
 
@@ -264,7 +264,7 @@ namespace VLC
         /// Identifies the <see cref="Options"/> dependency property.
         /// </summary>
         internal static readonly DependencyProperty OptionsProperty = DependencyProperty.Register("Options", typeof(IDictionary<string, object>), typeof(MediaElement),
-            new PropertyMetadata(null));
+            new PropertyMetadata(new Dictionary<string, object>()));
         /// <summary>
         /// Gets or sets the options for the media
         /// </summary>
@@ -614,19 +614,21 @@ namespace VLC
                 return;
             }
 
-            string location;
             FromType type;
-            if (source.IsFile)
+            Uri location;
+            if (!Uri.TryCreate(source, UriKind.RelativeOrAbsolute, out location) || location.IsAbsoluteUri && !location.IsFile)
             {
-                location = (source.IsAbsoluteUri ? source.LocalPath : Path.Combine(Package.Current.InstalledLocation.Path, source.LocalPath));
-                type = FromType.FromPath;
+                type = FromType.FromLocation;
             }
             else
             {
-                location = source.AbsoluteUri;
-                type = FromType.FromLocation;
+                if (!location.IsAbsoluteUri)
+                {
+                    source = Path.Combine(Package.Current.InstalledLocation.Path, source);
+                }
+                type = FromType.FromPath;
             }
-            var media = new Media(Instance, location, type);
+            var media = new Media(Instance, source, type);
             media.addOption($":avcodec-hw={(HardwareAcceleration ? "d3d11va" : "none")}");
             media.addOption($":avcodec-threads={Convert.ToInt32(HardwareAcceleration)}");
             var options = Options;
