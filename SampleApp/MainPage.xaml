@@ -10,9 +10,16 @@
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <vlc:MediaElement AreTransportControlsEnabled="True" HardwareAcceleration="True"
-                          Source="http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_480p_surround-fix.avi">
+                          Source="{x:Bind Vm.Source, Mode=OneWay}">
             <vlc:MediaElement.TransportControls>
-                <vlc:MediaTransportControls ControlPanelOpacity="0.8"  />
+                <vlc:MediaTransportControls ControlPanelOpacity="0.8">
+                    <CommandBar>
+                        <AppBarButton Icon="OpenFile" Label="Open file" Command="{x:Bind Vm.OpenFileCommand}" />
+                        <CommandBar.Content>
+                            <TextBlock Text="{x:Bind Vm.Title, Mode=OneWay}" Margin="12,14" />
+                        </CommandBar.Content>
+                    </CommandBar>
+                </vlc:MediaTransportControls>
             </vlc:MediaElement.TransportControls>
         </vlc:MediaElement>
     </Grid>

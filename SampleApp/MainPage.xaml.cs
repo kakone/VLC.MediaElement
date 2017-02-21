@@ -1,17 +1,27 @@
-﻿using Windows.UI.Xaml.Controls;
-
-// The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
+﻿using Microsoft.Practices.ServiceLocation;
+using Windows.UI.Xaml.Controls;
 
 namespace SampleApp
 {
     /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
+    /// Main page.
     /// </summary>
     public sealed partial class MainPage : Page
     {
+        /// <summary>
+        /// Initializes a new instance of MainPage class.
+        /// </summary>
         public MainPage()
         {
             this.InitializeComponent();
+        }
+
+        /// <summary>
+        /// Gets the main viewmodel.
+        /// </summary>
+        public MainViewModel Vm
+        {
+            get { return (MainViewModel)ServiceLocator.Current.GetInstance<IMainViewModel>(); }
         }
     }
 }

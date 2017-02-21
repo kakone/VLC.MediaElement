@@ -48,6 +48,8 @@ namespace SampleApp
                 this.DebugSettings.EnableFrameRateCounter = true;
             }
 #endif
+            ViewModelLocator.Register();
+
             Frame rootFrame = Window.Current.Content as Frame;
 
             // Do not repeat app initialization when the Window already has content,
