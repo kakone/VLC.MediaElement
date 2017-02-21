@@ -22,6 +22,20 @@ xmlns:vlc="using:VLC"
 
 ![VLC.MediaElement screenshot](http://freemiupnp.fr/tv/VLC.MediaElement.png)
 
+## How To
+- How to play a file using a FileOpenPicker ?
+```
+var fileOpenPicker = new FileOpenPicker();
+fileOpenPicker.FileTypeFilter.Add("*");
+var file = await fileOpenPicker.PickSingleFileAsync();
+if (file != null)
+{
+    var token = "{1BBC4B94-BE33-4D79-A0CB-E5C6CDB9D107}";   // GUID in registry format
+    StorageApplicationPermissions.FutureAccessList.AddOrReplace(token, file);
+    mediaElement.Source = $"winrt://{token}";
+}
+```
+
 ## Added properties
 There are some added properties compared to the classic MediaElement :
 - DeinterlaceMode : the deinterlace mode (Bob, Mean, Linear, X, Yadif, Yadif2x, ...) - only works if HardwareAcceleration is set to false.
@@ -36,7 +50,7 @@ On VLC.MediaTransportControls :
 - CursorAutoHide : indicates whether the mouse cursor must be hidden automatically or not.
 - IsDeinterlaceModeButtonEnabled : indicates whether the user can choose a deinterlace mode.
 - IsDeinterlaceModeButtonVisible : indicates whether the deinterlace mode button must be shown or not.
-
+ 
 ## Download
 [![NuGet](https://img.shields.io/nuget/v/VLC.MediaElement.svg)](https://www.nuget.org/packages/VLC.MediaElement)
 
