@@ -995,8 +995,9 @@ namespace VLC
         /// <summary>
         /// Updates the state of the media
         /// </summary>
+        /// <param name="previousState">previous state of the media element</param>
         /// <param name="state">state of the media element</param>
-        internal void UpdateState(MediaElementState state)
+        internal void UpdateState(MediaElementState previousState, MediaElementState state)
         {
             string statusStateName, playPauseStateName, playPauseToolTip;
             switch (state)
@@ -1014,7 +1015,7 @@ namespace VLC
                     playPauseToolTip = "Play";
                     break;
                 case MediaElementState.Buffering:
-                    statusStateName = "Buffering";
+                    statusStateName = (previousState == MediaElementState.Playing || previousState == MediaElementState.Opening ? "Buffering" : null);
                     playPauseStateName = null;
                     playPauseToolTip = null;
                     break;

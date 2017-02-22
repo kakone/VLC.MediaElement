@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.Foundation.Diagnostics;
@@ -22,6 +23,8 @@ namespace VLC
     /// </summary>
     public sealed class MediaElement : Control
     {
+        private static SemaphoreSlim logSemaphoreSlim = new SemaphoreSlim(1, 1);
+
         /// <summary>
         /// Occurs when zoom has changed.
         /// </summary>
@@ -403,7 +406,18 @@ namespace VLC
         private async void OnError(string title, string text)
         {
             await DispatcherRunAsync(() => TransportControls?.SetError($"{title}{Environment.NewLine}{text}"));
-            try { await Logger.SaveToFileAsync(LogFilename); } catch (Exception) { }
+            await logSemaphoreSlim.WaitAsync();
+            try
+            {
+                await Logger.SaveToFileAsync(LogFilename);
+            }
+            catch (Exception)
+            {
+            }
+            finally
+            {
+                logSemaphoreSlim.Release();
+            }
         }
 
         private async void OnShowLoginDialog(Dialog dialog, string title, string text, string defaultUserName, bool askToStore)
@@ -504,10 +518,11 @@ namespace VLC
         {
             await DispatcherRunAsync(() =>
             {
-                if (CurrentState != state)
+                var previousState = CurrentState;
+                if (previousState != state)
                 {
                     CurrentState = state;
-                    TransportControls?.UpdateState(state);
+                    TransportControls?.UpdateState(previousState, state);
                 }
             });
         }
