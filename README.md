@@ -24,15 +24,18 @@ xmlns:vlc="using:VLC"
 
 ## How To
 - How to play a file using a FileOpenPicker ?
+
+```
+private const string FILE_TOKEN = "{1BBC4B94-BE33-4D79-A0CB-E5C6CDB9D107}"; // GUID in registry format
+```
 ```
 var fileOpenPicker = new FileOpenPicker();
 fileOpenPicker.FileTypeFilter.Add("*");
 var file = await fileOpenPicker.PickSingleFileAsync();
 if (file != null)
 {
-    var token = "{1BBC4B94-BE33-4D79-A0CB-E5C6CDB9D107}";   // GUID in registry format
-    StorageApplicationPermissions.FutureAccessList.AddOrReplace(token, file);
-    mediaElement.Source = $"winrt://{token}";
+    StorageApplicationPermissions.FutureAccessList.AddOrReplace(FILE_TOKEN, file);
+    mediaElement.Source = $"winrt://{FILE_TOKEN}";
 }
 ```
 
