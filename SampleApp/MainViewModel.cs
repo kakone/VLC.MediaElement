@@ -10,7 +10,7 @@ namespace SampleApp
     /// <summary>
     /// Main ViewModel.
     /// </summary>
-    public class MainViewModel : ViewModelBase, IMainViewModel
+    public class MainViewModel : ViewModelBase
     {
         private const string FILE_TOKEN = "{1BBC4B94-BE33-4D79-A0CB-E5C6CDB9D107}";
 

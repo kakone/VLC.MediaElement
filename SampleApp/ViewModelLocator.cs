@@ -6,17 +6,25 @@ namespace SampleApp
     /// <summary>
     /// ViewModel locator.
     /// </summary>
-    static class ViewModelLocator
+    public class ViewModelLocator
     {
         /// <summary>
         /// Register the view models.
         /// </summary>
-        public static void Register()
+        static ViewModelLocator()
         {
             var simpleIoc = SimpleIoc.Default;
             ServiceLocator.SetLocatorProvider(() => simpleIoc);
 
-            simpleIoc.Register<IMainViewModel, MainViewModel>();
+            simpleIoc.Register<MainViewModel>();
+        }
+
+        /// <summary>
+        /// Gets the main viewmodel.
+        /// </summary>
+        public MainViewModel Main
+        {
+            get { return ServiceLocator.Current.GetInstance<MainViewModel>(); }
         }
     }
 }

@@ -5,4 +5,10 @@
     xmlns:local="using:SampleApp"
     RequestedTheme="Dark">
 
+    <Application.Resources>
+        <ResourceDictionary>
+            <local:ViewModelLocator x:Key="ViewModelLocator" />
+        </ResourceDictionary>
+    </Application.Resources>
+
 </Application>

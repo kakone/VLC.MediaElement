@@ -1,5 +1,4 @@
-﻿using Microsoft.Practices.ServiceLocation;
-using Windows.UI.Xaml.Controls;
+﻿using Windows.UI.Xaml.Controls;
 
 namespace SampleApp
 {
@@ -21,7 +20,7 @@ namespace SampleApp
         /// </summary>
         public MainViewModel Vm
         {
-            get { return (MainViewModel)ServiceLocator.Current.GetInstance<IMainViewModel>(); }
+            get { return DataContext as MainViewModel; }
         }
     }
 }
