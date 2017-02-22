@@ -35,6 +35,7 @@ var file = await fileOpenPicker.PickSingleFileAsync();
 if (file != null)
 {
     StorageApplicationPermissions.FutureAccessList.AddOrReplace(FILE_TOKEN, file);
+    mediaElement.Source = null;
     mediaElement.Source = $"winrt://{FILE_TOKEN}";
 }
 ```
