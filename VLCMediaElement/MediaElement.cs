@@ -66,10 +66,10 @@ namespace VLC
 
         private SwapChainPanel SwapChainPanel { get; set; }
         private Instance Instance { get; set; }
-        private MediaPlayer MediaPlayer { get; set; }
         private Media Media { get; set; }
         private AudioDeviceHandler AudioDevice { get; set; }
         private LoggingChannel LoggingChannel { get; set; }
+        private bool UpdatingPosition { get; set; }
 
         private string _audioDeviceId;
         private string AudioDeviceId
@@ -84,6 +84,11 @@ namespace VLC
                 }
             }
         }
+
+        /// <summary>
+        /// Gets the underlying media player
+        /// </summary>
+        public MediaPlayer MediaPlayer { get; private set; }
 
         /// <summary>
         /// Gets or sets the keystore filename
@@ -106,8 +111,8 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="IsMuted"/> dependency property.
         /// </summary>
-        internal static readonly DependencyProperty IsMutedProperty = DependencyProperty.Register("IsMuted", typeof(bool), typeof(MediaElement),
-           new PropertyMetadata(false, (d, e) => ((MediaElement)d).OnIsMutedChanged()));
+        public static DependencyProperty IsMutedProperty { get; } = DependencyProperty.Register("IsMuted", typeof(bool), typeof(MediaElement),
+            new PropertyMetadata(false, (d, e) => ((MediaElement)d).OnIsMutedChanged()));
         /// <summary>
         /// Gets or sets a value indicating whether the audio is muted.
         /// </summary>
@@ -118,10 +123,24 @@ namespace VLC
         }
 
         /// <summary>
+        /// Identifies the <see cref="Position"/> dependency property.
+        /// </summary>
+        public static DependencyProperty PositionProperty { get; } = DependencyProperty.Register("Position", typeof(TimeSpan), typeof(MediaElement),
+            new PropertyMetadata(TimeSpan.Zero, (d, e) => ((MediaElement)d).OnPositionChanged()));
+        /// <summary>
+        /// Gets or sets the current position of progress through the media's playback time.
+        /// </summary>
+        public TimeSpan Position
+        {
+            get { return (TimeSpan)GetValue(PositionProperty); }
+            set { SetValue(PositionProperty, value); }
+        }
+
+        /// <summary>
         /// Identifies the <see cref="Volume"/> dependency property.
         /// </summary>
-        internal static readonly DependencyProperty VolumeProperty = DependencyProperty.Register("Volume", typeof(int), typeof(MediaElement),
-           new PropertyMetadata(100, (d, e) => ((MediaElement)d).OnVolumeChanged()));
+        public static DependencyProperty VolumeProperty { get; } = DependencyProperty.Register("Volume", typeof(int), typeof(MediaElement),
+            new PropertyMetadata(100, (d, e) => ((MediaElement)d).OnVolumeChanged()));
         /// <summary>
         /// Gets or sets the media's volume.
         /// </summary>
@@ -134,8 +153,8 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="CurrentState"/> dependency property.
         /// </summary>
-        internal static readonly DependencyProperty CurrentStateProperty = DependencyProperty.Register("CurrentState", typeof(MediaElementState), typeof(MediaElement),
-           new PropertyMetadata(MediaElementState.Closed, (d, e) => ((MediaElement)d).OnCurrentStateChanged()));
+        public static DependencyProperty CurrentStateProperty { get; } = DependencyProperty.Register("CurrentState", typeof(MediaElementState), typeof(MediaElement),
+            new PropertyMetadata(MediaElementState.Closed, (d, e) => ((MediaElement)d).OnCurrentStateChanged()));
         /// <summary>
         /// Gets the current state.
         /// </summary>
@@ -148,7 +167,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="TransportControls"/> dependency property.
         /// </summary>
-        internal static readonly DependencyProperty TransportControlsProperty = DependencyProperty.Register("TransportControls", typeof(MediaTransportControls), typeof(MediaElement),
+        public static DependencyProperty TransportControlsProperty { get; } = DependencyProperty.Register("TransportControls", typeof(MediaTransportControls), typeof(MediaElement),
             new PropertyMetadata(null, OnTransportControlsPropertyChanged));
         /// <summary>
         /// Gets or sets the transport controls for the media.
@@ -162,7 +181,8 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="AreTransportControlsEnabled"/> dependency property.
         /// </summary>
-        internal static readonly DependencyProperty AreTransportControlsEnabledProperty = DependencyProperty.Register("AreTransportControlsEnabled", typeof(bool), typeof(MediaElement), new PropertyMetadata(false, (d, e) => UpdateMediaTransportControls(d)));
+        public static DependencyProperty AreTransportControlsEnabledProperty { get; } = DependencyProperty.Register("AreTransportControlsEnabled", typeof(bool), typeof(MediaElement),
+            new PropertyMetadata(false, (d, e) => UpdateMediaTransportControls(d)));
         /// <summary>
         /// Gets or sets a value that determines whether the standard transport controls are enabled.
         /// </summary>
@@ -175,7 +195,8 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="Zoom"/> dependency property.
         /// </summary>
-        internal static readonly DependencyProperty ZoomProperty = DependencyProperty.Register("Zoom", typeof(bool), typeof(MediaElement), new PropertyMetadata(false, async (d, e) => await ((MediaElement)d).OnZoomChanged()));
+        public static DependencyProperty ZoomProperty { get; } = DependencyProperty.Register("Zoom", typeof(bool), typeof(MediaElement),
+            new PropertyMetadata(false, async (d, e) => await ((MediaElement)d).OnZoomChanged()));
         /// <summary>
         /// Gets or sets a value indicating whether the video is zoomed.
         /// </summary>
@@ -188,7 +209,8 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="DeinterlaceMode"/> dependency property.
         /// </summary>
-        internal static readonly DependencyProperty DeinterlaceModeProperty = DependencyProperty.Register("DeinterlaceMode", typeof(DeinterlaceMode), typeof(MediaElement), new PropertyMetadata(DeinterlaceMode.Disabled, (d, e) => ((MediaElement)d).OnDeinterlaceModeChanged()));
+        public static DependencyProperty DeinterlaceModeProperty { get; } = DependencyProperty.Register("DeinterlaceMode", typeof(DeinterlaceMode), typeof(MediaElement),
+            new PropertyMetadata(DeinterlaceMode.Disabled, (d, e) => ((MediaElement)d).OnDeinterlaceModeChanged()));
         /// <summary>
         /// Gets or sets the deinterlace mode.
         /// </summary>
@@ -201,7 +223,8 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="HardwareAcceleration"/> dependency property.
         /// </summary>
-        internal static readonly DependencyProperty HardwareAccelerationProperty = DependencyProperty.Register("HardwareAcceleration", typeof(bool), typeof(MediaElement), new PropertyMetadata(false));
+        public static DependencyProperty HardwareAccelerationProperty { get; } = DependencyProperty.Register("HardwareAcceleration", typeof(bool), typeof(MediaElement),
+            new PropertyMetadata(false));
         /// <summary>
         /// Gets or sets a value indicating whether the hardware acceleration must be used.
         /// </summary>
@@ -214,7 +237,8 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="Source"/> dependency property.
         /// </summary>
-        internal static readonly DependencyProperty SourceProperty = DependencyProperty.Register("Source", typeof(string), typeof(MediaElement), new PropertyMetadata(null, (d, e) => ((MediaElement)d).OnSourceChanged()));
+        public static DependencyProperty SourceProperty { get; } = DependencyProperty.Register("Source", typeof(string), typeof(MediaElement),
+            new PropertyMetadata(null, (d, e) => ((MediaElement)d).OnSourceChanged()));
         /// <summary>
         /// Gets or sets a media source on the MediaElement.
         /// </summary>
@@ -227,7 +251,8 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="AutoPlay"/> dependency property.
         /// </summary>
-        internal static readonly DependencyProperty AutoPlayProperty = DependencyProperty.Register("AutoPlay", typeof(bool), typeof(MediaElement), new PropertyMetadata(true));
+        public static DependencyProperty AutoPlayProperty { get; } = DependencyProperty.Register("AutoPlay", typeof(bool), typeof(MediaElement),
+            new PropertyMetadata(true));
         /// <summary>
         /// Gets or sets a value that indicates whether media will begin playback automatically when the <see cref="Source"/> property is set.
         /// </summary>
@@ -240,7 +265,8 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="PosterSource"/> dependency property.
         /// </summary>
-        internal static readonly DependencyProperty PosterSourceProperty = DependencyProperty.Register("PosterSource", typeof(ImageSource), typeof(MediaElement), new PropertyMetadata(null));
+        public static DependencyProperty PosterSourceProperty { get; } = DependencyProperty.Register("PosterSource", typeof(ImageSource), typeof(MediaElement),
+            new PropertyMetadata(null));
         /// <summary>
         /// Gets or sets the image source that is used for a placeholder image during MediaElement loading transition states.
         /// </summary>
@@ -253,7 +279,8 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="Stretch"/> dependency property.
         /// </summary>
-        internal static readonly DependencyProperty StretchProperty = DependencyProperty.Register("Stretch", typeof(Stretch), typeof(MediaElement), new PropertyMetadata(Stretch.Uniform));
+        public static DependencyProperty StretchProperty { get; } = DependencyProperty.Register("Stretch", typeof(Stretch), typeof(MediaElement),
+            new PropertyMetadata(Stretch.Uniform));
         /// <summary>
         /// Gets or sets a value that describes how an MediaElement should be stretched to fill the destination rectangle.
         /// </summary>
@@ -266,7 +293,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="Options"/> dependency property.
         /// </summary>
-        internal static readonly DependencyProperty OptionsProperty = DependencyProperty.Register("Options", typeof(IDictionary<string, object>), typeof(MediaElement),
+        public static DependencyProperty OptionsProperty { get; } = DependencyProperty.Register("Options", typeof(IDictionary<string, object>), typeof(MediaElement),
             new PropertyMetadata(new Dictionary<string, object>()));
         /// <summary>
         /// Gets or sets the options for the media
@@ -321,6 +348,22 @@ namespace VLC
         {
             MediaPlayer?.setVolume(IsMuted ? 0 : Volume);
             TransportControls?.UpdateMuteState();
+        }
+
+        private void OnPositionChanged()
+        {
+            if (!UpdatingPosition)
+            {
+                var mediaPlayer = MediaPlayer;
+                if (mediaPlayer != null)
+                {
+                    var length = mediaPlayer.length();
+                    if (length > 0)
+                    {
+                        mediaPlayer.setPosition((float)(Position.TotalMilliseconds / length));
+                    }
+                }
+            }
         }
 
         private void OnVolumeChanged()
@@ -508,10 +551,14 @@ namespace VLC
 
         private async void EventManager_OnPositionChanged(float position)
         {
-            await DispatcherRunAsync(() =>
-            {
-                TransportControls?.OnPositionChanged(position);
-            });
+            await UpdateState(MediaElementState.Playing);
+            await DispatcherRunAsync(() => TransportControls?.OnPositionChanged(position));
+        }
+
+        private async void EventManager_OnTimeChanged(long time)
+        {
+            await SetPosition(time);
+            await DispatcherRunAsync(() => TransportControls?.OnTimeChanged(time));
         }
 
         private async Task UpdateState(MediaElementState state)
@@ -606,13 +653,14 @@ namespace VLC
             }
         }
 
-        private void ClearMedia()
+        private async Task ClearMedia()
         {
+            await SetPosition(0);
             Media = null;
             MediaPlayer = null;
         }
 
-        private void OnSourceChanged()
+        private async void OnSourceChanged()
         {
             if (Instance == null || DesignMode.DesignModeEnabled)
             {
@@ -625,7 +673,7 @@ namespace VLC
             var source = Source;
             if (source == null)
             {
-                ClearMedia();
+                await ClearMedia();
                 return;
             }
 
@@ -663,14 +711,13 @@ namespace VLC
             eventManager.OnPlaying += async () => await UpdateState(MediaElementState.Playing);
             eventManager.OnPaused += async () => await UpdateState(MediaElementState.Paused);
             eventManager.OnStopped += async () => await UpdateState(MediaElementState.Stopped);
-            eventManager.OnEndReached += async () => { ClearMedia(); await UpdateState(MediaElementState.Closed); };
-            eventManager.OnPositionChanged += async m => await UpdateState(MediaElementState.Playing);
+            eventManager.OnEndReached += async () => { await ClearMedia(); await UpdateState(MediaElementState.Closed); };
+            eventManager.OnPositionChanged += EventManager_OnPositionChanged;
             eventManager.OnVoutCountChanged += async p => await DispatcherRunAsync(async () => { await UpdateZoom(); });
             eventManager.OnTrackAdded += EventManager_OnTrackAdded;
             eventManager.OnTrackDeleted += async (trackType, trackId) => await DispatcherRunAsync(() => TransportControls?.OnTrackDeleted(trackType, trackId));
             eventManager.OnLengthChanged += async length => await DispatcherRunAsync(() => TransportControls?.OnLengthChanged(length));
-            eventManager.OnPositionChanged += EventManager_OnPositionChanged;
-            eventManager.OnTimeChanged += async time => await DispatcherRunAsync(() => TransportControls?.OnTimeChanged(time));
+            eventManager.OnTimeChanged += EventManager_OnTimeChanged;
             eventManager.OnSeekableChanged += async seekable => await DispatcherRunAsync(() => TransportControls?.OnSeekableChanged(seekable));
             MediaPlayer = mediaPlayer;
 
@@ -756,6 +803,22 @@ namespace VLC
         internal void SetPosition(float position)
         {
             MediaPlayer?.setPosition(position);
+        }
+
+        private async Task SetPosition(long time)
+        {
+            await DispatcherRunAsync(() =>
+            {
+                UpdatingPosition = true;
+                try
+                {
+                    Position = TimeSpan.FromMilliseconds(time);
+                }
+                finally
+                {
+                    UpdatingPosition = false;
+                }
+            });
         }
     }
 }

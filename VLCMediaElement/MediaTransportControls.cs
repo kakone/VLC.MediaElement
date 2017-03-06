@@ -32,7 +32,6 @@ namespace VLC
         private bool HasError { get; set; }
         private bool Seekable { get; set; }
         private TimeSpan Length { get; set; }
-        private TimeSpan Time { get; set; }
         private Point? PreviousPointerPosition { get; set; }
         private CoreCursor Cursor { get; set; }
         private DispatcherTimer Timer { get; set; } = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(1.5) };
@@ -736,7 +735,6 @@ namespace VLC
         /// </summary>
         internal void Clear()
         {
-            Time = TimeSpan.Zero;
             Length = TimeSpan.Zero;
             UpdateTime();
             Position = 0;
@@ -906,14 +904,14 @@ namespace VLC
         /// <param name="time">current position of progress</param>
         internal void OnTimeChanged(long time)
         {
-            Time = TimeSpan.FromMilliseconds(time);
             UpdateTime();
         }
 
         private void UpdateTime()
         {
-            var timeElapsed = Time.ToShortString();
-            var timeRemaining = (Length - Time).ToShortString();
+            var time = MediaElement.Position;
+            var timeElapsed = time.ToShortString();
+            var timeRemaining = (Length - time).ToShortString();
             if (TimeElapsedTextBlock?.Text != timeElapsed)
             {
                 TimeElapsedTextBlock.Text = timeElapsed;
@@ -1019,9 +1017,6 @@ namespace VLC
                     playPauseStateName = null;
                     playPauseToolTip = null;
                     break;
-                case MediaElementState.Playing:
-                    StartTimer();
-                    goto default;
                 default:
                     statusStateName = "Normal";
                     playPauseStateName = "PauseState";
