@@ -364,8 +364,7 @@ namespace VLC
             LeftSeparator = GetTemplateChild("LeftSeparator") as FrameworkElement;
             RightSeparator = GetTemplateChild("RightSeparator") as FrameworkElement;
 
-            var rootGrid = GetTemplateChild("RootGrid") as FrameworkElement;
-            if (rootGrid != null)
+            if (GetTemplateChild("RootGrid") is FrameworkElement rootGrid)
             {
                 rootGrid.DoubleTapped += Grid_DoubleTapped;
                 rootGrid.PointerEntered += Grid_PointerMoved;
@@ -508,8 +507,7 @@ namespace VLC
 
         private void AddTracksMenu(string trackMenuName, TrackType trackType, string availableStateName, string unavailableStateName, bool addNoneItem = false)
         {
-            var menu = GetTemplateChild(trackMenuName) as MenuFlyout;
-            if (menu != null)
+            if (GetTemplateChild(trackMenuName) is MenuFlyout menu)
             {
                 var tracksMenu = new TracksMenu()
                 {
@@ -528,8 +526,7 @@ namespace VLC
 
         private void SetButtonClick(DependencyObject dependencyObject, RoutedEventHandler eventHandler)
         {
-            var button = dependencyObject as Button;
-            if (button != null)
+            if (dependencyObject is Button button)
             {
                 button.Click += eventHandler;
             }
@@ -785,12 +782,7 @@ namespace VLC
 
         private TracksMenu GetTracksMenu(TrackType trackType)
         {
-            TracksMenu tracksMenu;
-            if (TracksMenus.TryGetValue(trackType, out tracksMenu))
-            {
-                return tracksMenu;
-            }
-            return null;
+            return (TracksMenus.TryGetValue(trackType, out TracksMenu tracksMenu) ? tracksMenu : null);
         }
 
         /// <summary>

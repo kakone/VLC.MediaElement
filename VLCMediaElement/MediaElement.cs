@@ -322,8 +322,7 @@ namespace VLC
 
         private static void OnTransportControlsPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var transportControls = e.NewValue as MediaTransportControls;
-            if (transportControls != null)
+            if (e.NewValue is MediaTransportControls transportControls)
             {
                 transportControls.MediaElement = ((MediaElement)d);
             }
@@ -614,9 +613,11 @@ namespace VLC
                 var var = (sarDen == sarNum ? (double)videoWidth / videoHeight : ((double)videoWidth * sarNum / sarDen) / videoHeight);
                 var screenar = screenWidth / screenHeight;
 
-                var scaleTransform = new ScaleTransform();
-                scaleTransform.CenterX = screenWidth / 2;
-                scaleTransform.CenterY = screenHeight / 2;
+                var scaleTransform = new ScaleTransform()
+                {
+                    CenterX = screenWidth / 2,
+                    CenterY = screenHeight / 2
+                };
                 var scale = (var > screenar ? var / screenar : screenar / var);
                 scaleTransform.ScaleX = scale;
                 scaleTransform.ScaleY = scale;
@@ -639,7 +640,7 @@ namespace VLC
         private async Task UpdateScale()
         {
             var scp = SwapChainPanel;
-            Instance.UpdateScale(scp.CompositionScaleX, scp.CompositionScaleY);
+            Instance?.UpdateScale(scp.CompositionScaleX, scp.CompositionScaleY);
             await UpdateSize();
         }
 
@@ -678,8 +679,7 @@ namespace VLC
             }
 
             FromType type;
-            Uri location;
-            if (!Uri.TryCreate(source, UriKind.RelativeOrAbsolute, out location) || location.IsAbsoluteUri && !location.IsFile)
+            if (!Uri.TryCreate(source, UriKind.RelativeOrAbsolute, out Uri location) || location.IsAbsoluteUri && !location.IsFile)
             {
                 type = FromType.FromLocation;
             }
