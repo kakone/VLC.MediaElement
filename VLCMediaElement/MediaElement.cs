@@ -1,4 +1,5 @@
 ﻿using libVLCX;
+using Nito.AsyncEx;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -69,6 +70,7 @@ namespace VLC
         private Media Media { get; set; }
         private AudioDeviceHandler AudioDevice { get; set; }
         private LoggingChannel LoggingChannel { get; set; }
+        private AsyncLock SourceChangedMutex { get; } = new AsyncLock();
         private bool UpdatingPosition { get; set; }
 
         private string _audioDeviceId;
@@ -668,63 +670,66 @@ namespace VLC
                 return;
             }
 
-            Stop();
-            TransportControls?.Clear();
+            using (await SourceChangedMutex.LockAsync())
+            {
+                Stop();
+                TransportControls?.Clear();
 
-            var source = Source;
-            if (source == null)
-            {
-                await ClearMedia();
-                return;
-            }
-
-            FromType type;
-            if (!Uri.TryCreate(source, UriKind.RelativeOrAbsolute, out Uri location) || location.IsAbsoluteUri && !location.IsFile)
-            {
-                type = FromType.FromLocation;
-            }
-            else
-            {
-                if (!location.IsAbsoluteUri)
+                var source = Source;
+                if (source == null)
                 {
-                    source = Path.Combine(Package.Current.InstalledLocation.Path, source);
+                    await ClearMedia();
+                    return;
                 }
-                type = FromType.FromPath;
-            }
-            var media = new Media(Instance, source, type);
-            media.addOption($":avcodec-hw={(HardwareAcceleration ? "d3d11va" : "none")}");
-            media.addOption($":avcodec-threads={Convert.ToInt32(HardwareAcceleration)}");
-            var options = Options;
-            if (options != null)
-            {
-                foreach (var option in options)
+
+                FromType type;
+                if (!Uri.TryCreate(source, UriKind.RelativeOrAbsolute, out Uri location) || location.IsAbsoluteUri && !location.IsFile)
                 {
-                    media.addOption($":{option.Key}={option.Value}");
+                    type = FromType.FromLocation;
                 }
+                else
+                {
+                    if (!location.IsAbsoluteUri)
+                    {
+                        source = Path.Combine(Package.Current.InstalledLocation.Path, source);
+                    }
+                    type = FromType.FromPath;
+                }
+                var media = new Media(Instance, source, type);
+                media.addOption($":avcodec-hw={(HardwareAcceleration ? "d3d11va" : "none")}");
+                media.addOption($":avcodec-threads={Convert.ToInt32(HardwareAcceleration)}");
+                var options = Options;
+                if (options != null)
+                {
+                    foreach (var option in options)
+                    {
+                        media.addOption($":{option.Key}={option.Value}");
+                    }
+                }
+                Media = media;
+
+                var mediaPlayer = new MediaPlayer(media);
+                var eventManager = mediaPlayer.eventManager();
+                eventManager.OnBuffering += async p => await UpdateState(MediaElementState.Buffering);
+                eventManager.OnOpening += async () => await UpdateState(MediaElementState.Opening);
+                eventManager.OnPlaying += async () => await UpdateState(MediaElementState.Playing);
+                eventManager.OnPaused += async () => await UpdateState(MediaElementState.Paused);
+                eventManager.OnStopped += async () => await UpdateState(MediaElementState.Stopped);
+                eventManager.OnEndReached += async () => { await ClearMedia(); await UpdateState(MediaElementState.Closed); };
+                eventManager.OnPositionChanged += EventManager_OnPositionChanged;
+                eventManager.OnVoutCountChanged += async p => await DispatcherRunAsync(async () => { await UpdateZoom(); });
+                eventManager.OnTrackAdded += EventManager_OnTrackAdded;
+                eventManager.OnTrackDeleted += async (trackType, trackId) => await DispatcherRunAsync(() => TransportControls?.OnTrackDeleted(trackType, trackId));
+                eventManager.OnLengthChanged += async length => await DispatcherRunAsync(() => TransportControls?.OnLengthChanged(length));
+                eventManager.OnTimeChanged += EventManager_OnTimeChanged;
+                eventManager.OnSeekableChanged += async seekable => await DispatcherRunAsync(() => TransportControls?.OnSeekableChanged(seekable));
+                MediaPlayer = mediaPlayer;
+
+                SetAudioDevice();
+                SetDeinterlaceMode();
+
+                if (AutoPlay) { Play(); }
             }
-            Media = media;
-
-            var mediaPlayer = new MediaPlayer(media);
-            var eventManager = mediaPlayer.eventManager();
-            eventManager.OnBuffering += async p => await UpdateState(MediaElementState.Buffering);
-            eventManager.OnOpening += async () => await UpdateState(MediaElementState.Opening);
-            eventManager.OnPlaying += async () => await UpdateState(MediaElementState.Playing);
-            eventManager.OnPaused += async () => await UpdateState(MediaElementState.Paused);
-            eventManager.OnStopped += async () => await UpdateState(MediaElementState.Stopped);
-            eventManager.OnEndReached += async () => { await ClearMedia(); await UpdateState(MediaElementState.Closed); };
-            eventManager.OnPositionChanged += EventManager_OnPositionChanged;
-            eventManager.OnVoutCountChanged += async p => await DispatcherRunAsync(async () => { await UpdateZoom(); });
-            eventManager.OnTrackAdded += EventManager_OnTrackAdded;
-            eventManager.OnTrackDeleted += async (trackType, trackId) => await DispatcherRunAsync(() => TransportControls?.OnTrackDeleted(trackType, trackId));
-            eventManager.OnLengthChanged += async length => await DispatcherRunAsync(() => TransportControls?.OnLengthChanged(length));
-            eventManager.OnTimeChanged += EventManager_OnTimeChanged;
-            eventManager.OnSeekableChanged += async seekable => await DispatcherRunAsync(() => TransportControls?.OnSeekableChanged(seekable));
-            MediaPlayer = mediaPlayer;
-
-            SetAudioDevice();
-            SetDeinterlaceMode();
-
-            if (AutoPlay) { Play(); }
         }
 
         /// <summary>
