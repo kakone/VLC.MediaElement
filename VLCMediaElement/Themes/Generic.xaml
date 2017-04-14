@@ -10,7 +10,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="vlc:MediaElement">
-                    <Grid Background="Transparent">
+                    <Grid Background="{TemplateBinding Background}">
                         <Image Source="{TemplateBinding PosterSource}" Stretch="{TemplateBinding Stretch}" />
                         <SwapChainPanel x:Name="SwapChainPanel" />
                         <ContentPresenter Content="{TemplateBinding TransportControls}" Visibility="{Binding AreTransportControlsEnabled, RelativeSource={RelativeSource Mode=TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}" />

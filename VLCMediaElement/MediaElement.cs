@@ -317,9 +317,10 @@ namespace VLC
 
             var swapChainPanel = (SwapChainPanel)GetTemplateChild("SwapChainPanel");
             SwapChainPanel = swapChainPanel;
-            swapChainPanel.Loaded += async (sender, e) => await Init(swapChainPanel);
             swapChainPanel.CompositionScaleChanged += async (sender, e) => await UpdateScale();
             swapChainPanel.SizeChanged += async (sender, e) => await UpdateSize();
+
+            Task.Run(() => DispatcherRunAsync(async () => await Init(swapChainPanel)));
         }
 
         private static void OnTransportControlsPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -580,7 +581,8 @@ namespace VLC
             if ((Stretch == Stretch.None || Stretch == Stretch.Uniform) && !Zoom ||
                 (Stretch == Stretch.Fill || Stretch == Stretch.UniformToFill && Zoom))
             {
-                if (SwapChainPanel.RenderTransform != null)
+                var renderTransform = SwapChainPanel.RenderTransform;
+                if (renderTransform != null && (!(renderTransform is MatrixTransform matrix) || matrix.Matrix != Matrix.Identity))
                 {
                     SwapChainPanel.RenderTransform = null;
                 }

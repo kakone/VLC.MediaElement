@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>VLC.MediaElement</id>
-    <version>0.9.14</version>
+    <version>0.9.15</version>
     <authors>Stéphane Mitermite</authors>
     <owners>Stéphane Mitermite</owners>
     <licenseUrl>https://github.com/kakone/VLC.MediaElement/blob/master/LICENSE</licenseUrl>
