@@ -22,7 +22,11 @@ namespace VLC
     /// <summary>
     /// Represents a control that contains audio and/or video.
     /// </summary>
-    public sealed class MediaElement : Control
+    public
+#if !CLASS_LIBRARY
+    sealed
+#endif
+    class MediaElement : Control
     {
         private static SemaphoreSlim logSemaphoreSlim = new SemaphoreSlim(1, 1);
 

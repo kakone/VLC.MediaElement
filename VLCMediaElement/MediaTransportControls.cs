@@ -19,7 +19,11 @@ namespace VLC
     /// Represents the playback controls for a media player element.
     /// </summary>
     [ContentProperty(Name = "Content")]
-    public sealed class MediaTransportControls : Control
+    public
+#if !CLASS_LIBRARY
+    sealed
+#endif
+    class MediaTransportControls : Control
     {
         /// <summary>
         /// Initializes a new instance of MediaTransportControls class.

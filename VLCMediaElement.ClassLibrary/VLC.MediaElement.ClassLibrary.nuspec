@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
-<package>
+<package >
   <metadata>
-    <id>VLC.MediaElement</id>
+    <id>VLC.MediaElement.ClassLibrary</id>
     <version>0.9.15</version>
     <authors>Stéphane Mitermite</authors>
     <owners>Stéphane Mitermite</owners>
     <licenseUrl>https://github.com/kakone/VLC.MediaElement/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/kakone/VLC.MediaElement</projectUrl>
-    <title>VLC.MediaElement for UWP (Windows Runtime Component)</title>
+    <title>VLC.MediaElement for UWP (Class Library)</title>
     <description>MediaElement clone powered by VLC</description>
     <releaseNotes>Beta release. Requires Windows 10 Anniversary Edition and matching Windows SDK.</releaseNotes>
     <copyright>Copyright © 2017 Stéphane Mitermite</copyright>
@@ -17,14 +17,12 @@
       <dependency id="Nito.AsyncEx" version="4.0.1" />
     </dependencies>
     <contentFiles>
-        <files include="**/*" buildAction="None" copyToOutput="true" flatten="true" />
+      <files include="**/*" buildAction="None" copyToOutput="true" flatten="true" />
     </contentFiles>
   </metadata>
   <files>
-    <file src="VLC.MediaElement.targets" target="build\uap10.0" />  
-    <file src="bin\Release\VLC.pri" target="lib\uap10.0" />
-    <file src="bin\Release\VLC.winmd" target="lib\uap10.0" />
-    <file src="bin\Release\VLC.XML" target="lib\uap10.0" />
-    <file src="bin\Release\VLC\**" target="lib\uap10.0\VLC" />
+    <file src="VLC.MediaElement.ClassLibrary.targets" target="build\uap10.0" />
+
+    <file src="bin\Release\VLC**" target="lib\uap10.0" />
   </files>
 </package>

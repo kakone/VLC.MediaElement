@@ -1,0 +1,145 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{DE74A33E-9798-46F5-A021-41EA459E2E81}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>VLC</RootNamespace>
+    <AssemblyName>VLC</AssemblyName>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
+    <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.15063.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.14393.0</TargetPlatformMinVersion>
+    <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{A5A43C5B-DE2A-4C0C-9213-0A381AF9435A};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <AppxBundlePlatforms>x86|x64|arm</AppxBundlePlatforms>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\VLCMediaElement\Converters\BooleanToVisibilityConverter.cs">
+      <Link>Converters\BooleanToVisibilityConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\VLCMediaElement\DeferrableEventArgs.cs">
+      <Link>DeferrableEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\VLCMediaElement\DeinterlaceMode.cs">
+      <Link>DeinterlaceMode.cs</Link>
+    </Compile>
+    <Compile Include="..\VLCMediaElement\DialogEventArgs.cs">
+      <Link>DialogEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\VLCMediaElement\FrameworkElementExtensions.cs">
+      <Link>FrameworkElementExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\VLCMediaElement\Logger.cs">
+      <Link>Logger.cs</Link>
+    </Compile>
+    <Compile Include="..\VLCMediaElement\LoginDialogEventArgs.cs">
+      <Link>LoginDialogEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\VLCMediaElement\LoginDialogResult.cs">
+      <Link>LoginDialogResult.cs</Link>
+    </Compile>
+    <Compile Include="..\VLCMediaElement\LogLevel.cs">
+      <Link>LogLevel.cs</Link>
+    </Compile>
+    <Compile Include="..\VLCMediaElement\LogLevelExtensions.cs">
+      <Link>LogLevelExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\VLCMediaElement\MediaElement.cs">
+      <Link>MediaElement.cs</Link>
+    </Compile>
+    <Compile Include="..\VLCMediaElement\MediaTransportControls.cs">
+      <Link>MediaTransportControls.cs</Link>
+    </Compile>
+    <Compile Include="..\VLCMediaElement\Properties\AssemblyInfo.cs">
+      <Link>Properties\AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\VLCMediaElement\TimeSpanExtensions.cs">
+      <Link>TimeSpanExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\VLCMediaElement\TracksMenu.cs">
+      <Link>TracksMenu.cs</Link>
+    </Compile>
+    <EmbeddedResource Include="Properties\VLCMediaElement.ClassLibrary.rd.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="libVLCX">
+      <Version>0.9.4</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
+      <Version>5.3.3</Version>
+    </PackageReference>
+    <PackageReference Include="Nito.AsyncEx">
+      <Version>4.0.1</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PRIResource Include="..\VLCMediaElement\Strings\en-US\Resources.resw">
+      <Link>Strings\en-US\Resources.resw</Link>
+    </PRIResource>
+  </ItemGroup>
+  <ItemGroup>
+    <PRIResource Include="..\VLCMediaElement\Strings\fr-FR\Resources.resw">
+      <Link>Strings\fr-FR\Resources.resw</Link>
+    </PRIResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="..\VLCMediaElement\Themes\Generic.xaml">
+      <Link>Themes\Generic.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\VLCMediaElement\app.config">
+      <Link>app.config</Link>
+    </None>
+  </ItemGroup>
+  <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
+    <VisualStudioVersion>14.0</VisualStudioVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;NETFX_CORE;WINDOWS_UWP;CLASS_LIBRARY</DefineConstants>
+    <DocumentationFile>bin\Debug\VLC.XML</DocumentationFile>
+    <NoWarn>;2008</NoWarn>
+    <NoStdLib>true</NoStdLib>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <GenerateLibraryLayout>false</GenerateLibraryLayout>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP;CLASS_LIBRARY</DefineConstants>
+    <DocumentationFile>bin\Release\VLC.XML</DocumentationFile>
+    <Optimize>true</Optimize>
+    <NoWarn>;2008</NoWarn>
+    <NoStdLib>true</NoStdLib>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <GenerateLibraryLayout>true</GenerateLibraryLayout>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
