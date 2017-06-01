@@ -1,7 +1,7 @@
 # VLC.MediaElement for UWP
 MediaElement clone powered by VLC.
 
-It's just a little control (a Windows Runtime Component), all the hard work is done by [VLC](https://code.videolan.org/videolan/vlc-winrt). So, thanks to the VLC team !
+It's just a little control, all the hard work is done by [VLC](https://code.videolan.org/videolan/vlc-winrt). So, thanks to the VLC team !
 
 ## Usage
 Requires Windows 10 Anniversary Edition and matching Windows SDK.
@@ -56,6 +56,6 @@ On VLC.MediaTransportControls :
 - IsDeinterlaceModeButtonVisible : indicates whether the deinterlace mode button must be shown or not.
  
 ## Download
-[![NuGet](https://img.shields.io/nuget/v/VLC.MediaElement.svg)](https://www.nuget.org/packages/VLC.MediaElement)
+Windows Runtime Component : [![NuGet](https://img.shields.io/nuget/v/VLC.MediaElement.svg)](https://www.nuget.org/packages/VLC.MediaElement)
 
-
+Class Library : [![NuGet](https://img.shields.io/nuget/v/VLC.MediaElement.ClassLibrary.svg)](https://www.nuget.org/packages/VLC.MediaElement.ClassLibrary)
