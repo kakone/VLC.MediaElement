@@ -57,6 +57,5 @@ On VLC.MediaTransportControls :
  
 ## Download
 Windows Runtime Component : [![NuGet](https://img.shields.io/nuget/v/VLC.MediaElement.svg)](https://www.nuget.org/packages/VLC.MediaElement)
+
 Class Library : [![NuGet](https://img.shields.io/nuget/v/VLC.MediaElement.ClassLibrary.svg)](https://www.nuget.org/packages/VLC.MediaElement.ClassLibrary)
-
-
