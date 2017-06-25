@@ -792,9 +792,9 @@ namespace VLC
         /// <summary>
         /// Called when a track (audio or subtitle) is added.
         /// </summary>
-        /// <param name="trackType">track type</param>
-        /// <param name="trackId">track identifier</param>
-        /// <param name="trackName">track name</param>
+        /// <param name="trackType">track type.</param>
+        /// <param name="trackId">track identifier.</param>
+        /// <param name="trackName">track name.</param>
         internal void OnTrackAdded(TrackType trackType, int trackId, string trackName)
         {
             AddTrack(GetTracksMenu(trackType), trackId, trackName, trackType == TrackType.Subtitle);
@@ -816,20 +816,36 @@ namespace VLC
             var menuItems = tracksMenu.MenuFlyout.Items;
             menuItems.Add(menuItem);
 
-            switch (menuItems.Count)
+            if (menuItems.Count == 2)
             {
-                case 2:
-                    var firstMenuItem = (menuItems.FirstOrDefault() as ToggleMenuFlyoutItem);
-                    if (subTitle || firstMenuItem?.Tag != null)
+                var firstMenuItem = (menuItems.FirstOrDefault() as ToggleMenuFlyoutItem);
+                if (subTitle || firstMenuItem?.Tag != null)
+                {
+                    firstMenuItem.IsChecked = true;
+                }
+                else
+                {
+                    menuItem.IsChecked = true;
+                }
+                VisualStateManager.GoToState(this, tracksMenu.AvailableStateName, true);
+            }
+        }
+
+        private void CheckMenuItem(TracksMenu tracksMenu, object menuItem)
+        {
+            ToggleMenuFlyoutItem toggleMenuFlyoutItem;
+            bool isChecked;
+            foreach (var item in tracksMenu.MenuFlyout.Items)
+            {
+                toggleMenuFlyoutItem = item as ToggleMenuFlyoutItem;
+                if (toggleMenuFlyoutItem != null)
+                {
+                    isChecked = (item == menuItem);
+                    if (toggleMenuFlyoutItem.IsChecked != isChecked)
                     {
-                        firstMenuItem.IsChecked = true;
+                        toggleMenuFlyoutItem.IsChecked = isChecked;
                     }
-                    else
-                    {
-                        menuItem.IsChecked = true;
-                    }
-                    VisualStateManager.GoToState(this, tracksMenu.AvailableStateName, true);
-                    break;
+                }
             }
         }
 
@@ -838,16 +854,26 @@ namespace VLC
             var menu = TracksMenus.FirstOrDefault(kvp => kvp.Value.MenuFlyout.Items.Contains(sender));
             if (!menu.Equals(default(KeyValuePair<TrackType, TracksMenu>)))
             {
-                foreach (var item in menu.Value.MenuFlyout.Items)
-                {
-                    if (item is ToggleMenuFlyoutItem)
-                    {
-                        ((ToggleMenuFlyoutItem)item).IsChecked = (item == sender);
-                    }
-                }
-
+                CheckMenuItem(menu.Value, sender);
                 MediaElement.SetTrack(menu.Key, (int?)((MenuFlyoutItemBase)sender).Tag);
             }
+        }
+
+        /// <summary>
+        /// Called when a track (audio or subtitle) is selected.
+        /// </summary>
+        /// <param name="trackType">track type</param>
+        /// <param name="trackId">track identifier</param>
+        internal void OnTrackSelected(TrackType trackType, int trackId)
+        {
+            var tracksMenu = GetTracksMenu(trackType);
+            if (tracksMenu == null)
+            {
+                return;
+            }
+
+            CheckMenuItem(tracksMenu,
+                tracksMenu.MenuFlyout.Items.FirstOrDefault(mi => trackId == -1 && mi.Tag == null || trackId.Equals(mi.Tag)));
         }
 
         /// <summary>
@@ -979,7 +1005,7 @@ namespace VLC
         }
 
         /// <summary>
-        /// Updates the volume slider
+        /// Updates the volume slider.
         /// </summary>
         internal void UpdateVolume()
         {
@@ -987,10 +1013,10 @@ namespace VLC
         }
 
         /// <summary>
-        /// Updates the state of the media
+        /// Updates the state of the media.
         /// </summary>
-        /// <param name="previousState">previous state of the media element</param>
-        /// <param name="state">state of the media element</param>
+        /// <param name="previousState">previous state of the media element.</param>
+        /// <param name="state">state of the media element.</param>
         internal void UpdateState(MediaElementState previousState, MediaElementState state)
         {
             string statusStateName, playPauseStateName, playPauseToolTip;
@@ -1036,9 +1062,9 @@ namespace VLC
         }
 
         /// <summary>
-        /// Sets the error message
+        /// Sets the error message.
         /// </summary>
-        /// <param name="error">error message</param>
+        /// <param name="error">error message.</param>
         internal void SetError(string error)
         {
             if (ErrorTextBlock != null)
@@ -1055,7 +1081,7 @@ namespace VLC
         /// <summary>
         /// Called when the current position of progress has changed.
         /// </summary>
-        /// <param name="position">current position of progress</param>
+        /// <param name="position">current position of progress.</param>
         internal void OnPositionChanged(float position)
         {
             if (ProgressSlider != null)

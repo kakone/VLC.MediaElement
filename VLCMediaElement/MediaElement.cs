@@ -2,6 +2,7 @@
 using Nito.AsyncEx;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -244,7 +245,7 @@ namespace VLC
         /// Identifies the <see cref="Source"/> dependency property.
         /// </summary>
         public static DependencyProperty SourceProperty { get; } = DependencyProperty.Register("Source", typeof(string), typeof(MediaElement),
-            new PropertyMetadata(null, (d, e) => ((MediaElement)d).OnSourceChanged()));
+            new PropertyMetadata(null, (d, e) => ((MediaElement)d).MediaSource = e.NewValue == null ? null : VLC.MediaSource.CreateFromUri((string)e.NewValue)));
         /// <summary>
         /// Gets or sets a media source on the MediaElement.
         /// </summary>
@@ -252,6 +253,20 @@ namespace VLC
         {
             get { return GetValue(SourceProperty) as string; }
             set { SetValue(SourceProperty, value); }
+        }
+
+        /// <summary>
+        /// Identifies the <see cref="MediaSource"/> dependency property.
+        /// </summary>
+        public static DependencyProperty MediaSourceProperty { get; } = DependencyProperty.Register("MediaSource", typeof(IMediaSource), typeof(MediaElement),
+            new PropertyMetadata(null, async (d, e) => await ((MediaElement)d).OnMediaSourceChanged(e.OldValue as IMediaSource, e.NewValue as IMediaSource)));
+        /// <summary>
+        /// Gets or sets a media source on the MediaElement.
+        /// </summary>
+        public IMediaSource MediaSource
+        {
+            get { return GetValue(MediaSourceProperty) as IMediaSource; }
+            set { SetValue(MediaSourceProperty, value); }
         }
 
         /// <summary>
@@ -449,7 +464,7 @@ namespace VLC
             AudioDeviceId = MediaDevice.GetDefaultAudioRenderId(AudioDeviceRole.Default);
             MediaDevice.DefaultAudioRenderDeviceChanged += (sender, e) => { if (e.Role == AudioDeviceRole.Default) { AudioDeviceId = e.Id; } };
 
-            OnSourceChanged();
+            await OnMediaSourceChanged();
         }
 
         private async void OnError(string title, string text)
@@ -662,14 +677,33 @@ namespace VLC
             }
         }
 
-        private async Task ClearMedia()
+        private async Task ClearMediaAsync()
         {
             await SetPosition(0);
             Media = null;
             MediaPlayer = null;
         }
 
-        private async void OnSourceChanged()
+        private async Task OnMediaSourceChanged(IMediaSource oldValue, IMediaSource newValue)
+        {
+            if (DesignMode.DesignModeEnabled)
+            {
+                return;
+            }
+
+            if (oldValue?.ExternalTimedTextSources is INotifyCollectionChanged)
+            {
+                ((INotifyCollectionChanged)oldValue.ExternalTimedTextSources).CollectionChanged -= ExternalTimedTextSourcesCollectionChanged;
+            }
+            if (newValue?.ExternalTimedTextSources is INotifyCollectionChanged)
+            {
+                ((INotifyCollectionChanged)newValue.ExternalTimedTextSources).CollectionChanged += ExternalTimedTextSourcesCollectionChanged;
+            }
+
+            await OnMediaSourceChanged();
+        }
+
+        private async Task OnMediaSourceChanged(bool forcePlay = false)
         {
             if (Instance == null || DesignMode.DesignModeEnabled)
             {
@@ -681,13 +715,14 @@ namespace VLC
                 Stop();
                 TransportControls?.Clear();
 
-                var source = Source;
-                if (source == null)
+                var mediaSource = MediaSource;
+                if (mediaSource == null)
                 {
-                    await ClearMedia();
+                    await ClearMediaAsync();
                     return;
                 }
 
+                var source = mediaSource.Uri;
                 FromType type;
                 if (!Uri.TryCreate(source, UriKind.RelativeOrAbsolute, out Uri location) || location.IsAbsoluteUri && !location.IsFile)
                 {
@@ -703,7 +738,6 @@ namespace VLC
                 }
                 var media = new Media(Instance, source, type);
                 media.addOption($":avcodec-hw={(HardwareAcceleration ? "d3d11va" : "none")}");
-                media.addOption($":avcodec-threads={Convert.ToInt32(HardwareAcceleration)}");
                 var options = Options;
                 if (options != null)
                 {
@@ -711,6 +745,10 @@ namespace VLC
                     {
                         media.addOption($":{option.Key}={option.Value}");
                     }
+                }
+                foreach (var timedTextSource in mediaSource.ExternalTimedTextSources)
+                {
+                    media.addSlave(SlaveType.Subtitle, 0, timedTextSource.Uri);
                 }
                 Media = media;
 
@@ -721,10 +759,11 @@ namespace VLC
                 eventManager.OnPlaying += async () => await UpdateState(MediaElementState.Playing);
                 eventManager.OnPaused += async () => await UpdateState(MediaElementState.Paused);
                 eventManager.OnStopped += async () => await UpdateState(MediaElementState.Stopped);
-                eventManager.OnEndReached += async () => { await ClearMedia(); await UpdateState(MediaElementState.Closed); };
+                eventManager.OnEndReached += async () => { await ClearMediaAsync(); await UpdateState(MediaElementState.Closed); };
                 eventManager.OnPositionChanged += EventManager_OnPositionChanged;
                 eventManager.OnVoutCountChanged += async p => await DispatcherRunAsync(async () => { await UpdateZoom(); });
                 eventManager.OnTrackAdded += EventManager_OnTrackAdded;
+                eventManager.OnTrackSelected += async (trackType, trackId) => await DispatcherRunAsync(() => TransportControls?.OnTrackSelected(trackType, trackId));
                 eventManager.OnTrackDeleted += async (trackType, trackId) => await DispatcherRunAsync(() => TransportControls?.OnTrackDeleted(trackType, trackId));
                 eventManager.OnLengthChanged += async length => await DispatcherRunAsync(() => TransportControls?.OnLengthChanged(length));
                 eventManager.OnTimeChanged += EventManager_OnTimeChanged;
@@ -734,7 +773,7 @@ namespace VLC
                 SetAudioDevice();
                 SetDeinterlaceMode();
 
-                if (AutoPlay) { Play(); }
+                if (forcePlay || AutoPlay) { Play(); }
             }
         }
 
@@ -769,11 +808,7 @@ namespace VLC
         {
             if (Media == null)
             {
-                OnSourceChanged();
-                if (!AutoPlay)
-                {
-                    MediaPlayer?.play();
-                }
+                OnMediaSourceChanged(true).ConfigureAwait(false);
             }
             else
             {
@@ -790,10 +825,10 @@ namespace VLC
         }
 
         /// <summary>
-        /// Sets audio or subtitle track
+        /// Sets audio or subtitle track.
         /// </summary>
-        /// <param name="trackType">track type</param>
-        /// <param name="trackId">track identifier</param>
+        /// <param name="trackType">track type.</param>
+        /// <param name="trackId">track identifier.</param>
         internal void SetTrack(TrackType trackType, int? trackId)
         {
             switch (trackType)
@@ -808,9 +843,9 @@ namespace VLC
         }
 
         /// <summary>
-        /// Sets the current position of progress
+        /// Sets the current position of progress.
         /// </summary>
-        /// <param name="position">position</param>
+        /// <param name="position">position.</param>
         internal void SetPosition(float position)
         {
             MediaPlayer?.setPosition(position);
@@ -830,6 +865,22 @@ namespace VLC
                     UpdatingPosition = false;
                 }
             });
+        }
+
+        private void ExternalTimedTextSourcesCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == NotifyCollectionChangedAction.Add || e.Action == NotifyCollectionChangedAction.Replace)
+            {
+                var mediaPlayer = MediaPlayer;
+                if (mediaPlayer == null || e.NewItems == null)
+                {
+                    return;
+                }
+                foreach (TimedTextSource timedTextSource in e.NewItems)
+                {
+                    mediaPlayer.addSlave(SlaveType.Subtitle, timedTextSource.Uri, false);
+                }
+            }
         }
     }
 }

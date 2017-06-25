@@ -1,7 +1,10 @@
 ﻿using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
 using System;
+using System.Threading.Tasks;
 using System.Windows.Input;
+using VLC;
+using Windows.Storage;
 using Windows.Storage.AccessCache;
 using Windows.Storage.Pickers;
 
@@ -13,6 +16,7 @@ namespace SampleApp
     public class MainViewModel : ViewModelBase
     {
         private const string FILE_TOKEN = "{1BBC4B94-BE33-4D79-A0CB-E5C6CDB9D107}";
+        private const string SUBTITLE_FILE_TOKEN = "{16BA03D6-BCA8-403E-B1E8-166B0020B4A7}";
 
         /// <summary>
         /// Initializes a new instance of MainViewModel class.
@@ -20,18 +24,27 @@ namespace SampleApp
         public MainViewModel()
         {
             OpenFileCommand = new RelayCommand(OpenFile);
-            Source = "http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_480p_surround-fix.avi";
+            OpenSubtitleFileCommand = new RelayCommand(OpenSubtitleFile, () => MediaSource != null);
+            MediaSource = VLC.MediaSource.CreateFromUri("http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_480p_surround-fix.avi");
             Title = "Big Buck Bunny";
         }
 
-        private string _source;
+        private IMediaSource _mediaSource;
         /// <summary>
         /// Gets the media source.
         /// </summary>
-        public string Source
+        public IMediaSource MediaSource
         {
-            get { return _source; }
-            private set { Set(nameof(Source), ref _source, value); }
+            get { return _mediaSource; }
+            private set
+            {
+                if (_mediaSource != value)
+                {
+                    _mediaSource = value;
+                    RaisePropertyChanged(nameof(MediaSource));
+                    OpenSubtitleFileCommand.RaiseCanExecuteChanged();
+                }
+            }
         }
 
         private string _title;
@@ -47,20 +60,49 @@ namespace SampleApp
         /// <summary>
         /// Gets the open file command.
         /// </summary>
-        public ICommand OpenFileCommand { get; private set; }
+        public ICommand OpenFileCommand { get; }
 
-        private async void OpenFile()
+        /// <summary>
+        /// Gets the open subtitle file command.
+        /// </summary>
+        public RelayCommand OpenSubtitleFileCommand { get; }
+
+        private async Task<StorageFile> PickSingleFileAsync(string fileTypeFilter, string token)
         {
-            var fileOpenPicker = new FileOpenPicker();
-            fileOpenPicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
-            fileOpenPicker.FileTypeFilter.Add("*");
+            var fileOpenPicker = new FileOpenPicker()
+            {
+                SuggestedStartLocation = PickerLocationId.VideosLibrary
+            };
+            fileOpenPicker.FileTypeFilter.Add(fileTypeFilter);
             var file = await fileOpenPicker.PickSingleFileAsync();
             if (file != null)
             {
-                StorageApplicationPermissions.FutureAccessList.AddOrReplace(FILE_TOKEN, file);
-                Source = null;
-                Source = $"winrt://{FILE_TOKEN}";
+                StorageApplicationPermissions.FutureAccessList.AddOrReplace(token, file);
+            }
+            return file;
+        }
+
+        private async void OpenFile()
+        {
+            var file = await PickSingleFileAsync("*", FILE_TOKEN);
+            if (file != null)
+            {
+                MediaSource = VLC.MediaSource.CreateFromUri($"winrt://{FILE_TOKEN}");
                 Title = file.DisplayName;
+            }
+        }
+
+        private async void OpenSubtitleFile()
+        {
+            var mediaSource = MediaSource;
+            if (mediaSource == null)
+            {
+                return;
+            }
+            var file = await PickSingleFileAsync(".srt", SUBTITLE_FILE_TOKEN);
+            if (file != null)
+            {
+                MediaSource.ExternalTimedTextSources.Add(TimedTextSource.CreateFromUri($"winrt://{SUBTITLE_FILE_TOKEN}"));
             }
         }
     }

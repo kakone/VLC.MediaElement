@@ -37,6 +37,9 @@
     <Compile Include="..\VLCMediaElement\FrameworkElementExtensions.cs">
       <Link>FrameworkElementExtensions.cs</Link>
     </Compile>
+    <Compile Include="..\VLCMediaElement\IMediaSource.cs">
+      <Link>IMediaSource.cs</Link>
+    </Compile>
     <Compile Include="..\VLCMediaElement\Logger.cs">
       <Link>Logger.cs</Link>
     </Compile>
@@ -55,11 +58,17 @@
     <Compile Include="..\VLCMediaElement\MediaElement.cs">
       <Link>MediaElement.cs</Link>
     </Compile>
+    <Compile Include="..\VLCMediaElement\MediaSource.cs">
+      <Link>MediaSource.cs</Link>
+    </Compile>
     <Compile Include="..\VLCMediaElement\MediaTransportControls.cs">
       <Link>MediaTransportControls.cs</Link>
     </Compile>
     <Compile Include="..\VLCMediaElement\Properties\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\VLCMediaElement\TimedTextSource.cs">
+      <Link>TimedTextSource.cs</Link>
     </Compile>
     <Compile Include="..\VLCMediaElement\TimeSpanExtensions.cs">
       <Link>TimeSpanExtensions.cs</Link>
