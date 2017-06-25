@@ -26,6 +26,15 @@ namespace VLC
     class MediaTransportControls : Control
     {
         /// <summary>
+        /// Occurs when view mode is changing.
+        /// </summary>
+        public event EventHandler<DeferrableCancelEventArgs> ViewModeChanging;
+        /// <summary>
+        /// Occurs when view mode has changed.
+        /// </summary>
+        public event RoutedEventHandler ViewModeChanged;
+
+        /// <summary>
         /// Initializes a new instance of MediaTransportControls class.
         /// </summary>
         public MediaTransportControls()
@@ -53,6 +62,7 @@ namespace VLC
         private FrameworkElement PlayPauseButtonOnLeft { get; set; }
         private FrameworkElement ZoomButton { get; set; }
         private FrameworkElement FullWindowButton { get; set; }
+        private FrameworkElement CompactOverlayModeButton { get; set; }
         private FrameworkElement StopButton { get; set; }
         private TextBlock TimeElapsedTextBlock { get; set; }
         private TextBlock TimeRemainingTextBlock { get; set; }
@@ -234,7 +244,7 @@ namespace VLC
         /// Identifies the <see cref="IsFullWindowButtonVisible"/> dependency property.
         /// </summary>
         public static DependencyProperty IsFullWindowButtonVisibleProperty { get; } = DependencyProperty.Register("IsFullWindowButtonVisible", typeof(bool), typeof(MediaTransportControls),
-            new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdateZoomButton()));
+            new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdateFullWindowButton()));
         /// <summary>
         /// Gets or sets a value that indicates whether the full screen button is shown.
         /// </summary>
@@ -248,7 +258,7 @@ namespace VLC
         /// Identifies the <see cref="IsFullWindowEnabled"/> dependency property.
         /// </summary>
         public static DependencyProperty IsFullWindowEnabledProperty { get; } = DependencyProperty.Register("IsFullWindowEnabled", typeof(bool), typeof(MediaTransportControls),
-            new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdateZoomButton()));
+            new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdateFullWindowButton()));
         /// <summary>
         /// Gets or sets a value that indicates whether a user can play the media in full-screen mode.
         /// </summary>
@@ -256,6 +266,35 @@ namespace VLC
         {
             get { return (bool)GetValue(IsFullWindowEnabledProperty); }
             set { SetValue(IsFullWindowEnabledProperty, value); }
+        }
+
+        /// <summary>
+        /// Identifies the <see cref="IsCompactOverlayModeButtonVisible"/> dependency property.
+        /// </summary>
+        public static DependencyProperty IsCompactOverlayModeButtonVisibleProperty { get; } = DependencyProperty.Register("IsCompactOverlayModeButtonVisible", typeof(bool), typeof(MediaTransportControls),
+            new PropertyMetadata(ApplicationView.GetForCurrentView().IsViewModeSupported(ApplicationViewMode.CompactOverlay),
+                (d, e) => ((MediaTransportControls)d).UpdateCompactOverlayModeButton()));
+        /// <summary>
+        /// Gets or sets a value that indicates whether the full screen button is shown.
+        /// </summary>
+        public bool IsCompactOverlayModeButtonVisible
+        {
+            get { return (bool)GetValue(IsCompactOverlayModeButtonVisibleProperty); }
+            set { SetValue(IsCompactOverlayModeButtonVisibleProperty, value); }
+        }
+
+        /// <summary>
+        /// Identifies the <see cref="IsCompactOverlayModeButtonEnabled"/> dependency property.
+        /// </summary>
+        public static DependencyProperty IsCompactOverlayModeButtonEnabledProperty { get; } = DependencyProperty.Register("IsCompactOverlayModeButtonEnabled", typeof(bool), typeof(MediaTransportControls),
+            new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdateCompactOverlayModeButton()));
+        /// <summary>
+        /// Gets or sets a value that indicates whether a user can play the media in full-screen mode.
+        /// </summary>
+        public bool IsCompactOverlayModeButtonEnabled
+        {
+            get { return (bool)GetValue(IsCompactOverlayModeButtonEnabledProperty); }
+            set { SetValue(IsCompactOverlayModeButtonEnabledProperty, value); }
         }
 
         /// <summary>
@@ -408,6 +447,7 @@ namespace VLC
             PlayPauseButtonOnLeft = GetTemplateChild("PlayPauseButtonOnLeft") as FrameworkElement;
             ZoomButton = GetTemplateChild("ZoomButton") as FrameworkElement;
             FullWindowButton = GetTemplateChild("FullWindowButton") as FrameworkElement;
+            CompactOverlayModeButton = GetTemplateChild("CompactOverlayModeButton") as FrameworkElement;
             StopButton = GetTemplateChild("StopButton") as FrameworkElement;
             DeinterlaceModeButton = GetTemplateChild("DeinterlaceModeButton") as FrameworkElement;
 
@@ -442,6 +482,7 @@ namespace VLC
             SetButtonClick(PlayPauseButton, PlayPauseButton_Click);
             SetButtonClick(ZoomButton, ZoomButton_Click);
             SetButtonClick(FullWindowButton, FullWindowButton_Click);
+            SetButtonClick(CompactOverlayModeButton, CompactOverlayModeButton_Click);
             SetButtonClick(StopButton, StopButton_Click);
             var audioMuteButton = GetTemplateChild("AudioMuteButton");
             SetButtonClick(audioMuteButton, AudioMuteButton_Click);
@@ -461,6 +502,7 @@ namespace VLC
             UpdatePlayPauseButton();
             UpdateZoomButton();
             UpdateFullWindowButton();
+            UpdateCompactOverlayModeButton();
             UpdateStopButton();
             UpdateMuteState();
             UpdateDeinterlaceModeButton();
@@ -468,6 +510,7 @@ namespace VLC
 
             ApplicationView.GetForCurrentView().VisibleBoundsChanged += (sender, args) => UpdateFullWindowState();
             UpdateFullWindowState();
+            UpdateCompactOverlayModeState();
 
             Timer.Tick += Timer_Tick;
         }
@@ -697,6 +740,11 @@ namespace VLC
         private void UpdateFullWindowButton()
         {
             UpdateControl(FullWindowButton, IsFullWindowButtonVisible, IsFullWindowEnabled);
+        }
+
+        private void UpdateCompactOverlayModeButton()
+        {
+            UpdateControl(CompactOverlayModeButton, IsCompactOverlayModeButtonVisible, IsCompactOverlayModeButtonEnabled);
         }
 
         private void UpdateStopButton()
@@ -982,9 +1030,37 @@ namespace VLC
             VisualStateManager.GoToState(this, fullScreen ? "FullWindowState" : "NonFullWindowState", true);
         }
 
+        private void UpdateCompactOverlayModeState()
+        {
+            SetToolTip(CompactOverlayModeButton, ApplicationView.GetForCurrentView().ViewMode == ApplicationViewMode.CompactOverlay ? "LeaveMiniView" : "PlayInMiniView");
+        }
+
         private void FullWindowButton_Click(object sender, RoutedEventArgs e)
         {
             ToggleFullscreen();
+        }
+
+        private async void CompactOverlayModeButton_Click(object sender, RoutedEventArgs e)
+        {
+            var cancelEventArgs = new DeferrableCancelEventArgs();
+            var viewModeChanging = ViewModeChanging;
+            if (viewModeChanging != null)
+            {
+                viewModeChanging(this, cancelEventArgs);
+                await cancelEventArgs.WaitForDeferralsAsync();
+            }
+            var applicationView = ApplicationView.GetForCurrentView();
+            if (cancelEventArgs.Cancel || await applicationView.TryEnterViewModeAsync(
+                applicationView.ViewMode == ApplicationViewMode.CompactOverlay ? ApplicationViewMode.Default : ApplicationViewMode.CompactOverlay))
+            {
+                if (!cancelEventArgs.Cancel)
+                {
+                    ViewModeChanged?.Invoke(this, new RoutedEventArgs());
+                }
+                UpdateCompactOverlayModeState();
+                Show();
+                StartTimer();
+            }
         }
 
         private void StopButton_Click(object sender, RoutedEventArgs e)

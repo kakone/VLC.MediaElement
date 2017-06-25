@@ -25,6 +25,9 @@
     <Compile Include="..\VLCMediaElement\Converters\BooleanToVisibilityConverter.cs">
       <Link>Converters\BooleanToVisibilityConverter.cs</Link>
     </Compile>
+    <Compile Include="..\VLCMediaElement\DeferrableCancelEventArgs.cs">
+      <Link>DeferrableCancelEventArgs.cs</Link>
+    </Compile>
     <Compile Include="..\VLCMediaElement\DeferrableEventArgs.cs">
       <Link>DeferrableEventArgs.cs</Link>
     </Compile>

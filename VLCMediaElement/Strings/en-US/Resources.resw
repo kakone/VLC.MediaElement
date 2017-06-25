@@ -162,6 +162,9 @@
   <data name="FullScreen" xml:space="preserve">
     <value>Full Screen</value>
   </data>
+  <data name="LeaveMiniView" xml:space="preserve">
+    <value>Leave mini view</value>
+  </data>
   <data name="Mute" xml:space="preserve">
     <value>Mute</value>
   </data>
@@ -173,6 +176,9 @@
   </data>
   <data name="Play" xml:space="preserve">
     <value>Play</value>
+  </data>
+  <data name="PlayInMiniView" xml:space="preserve">
+    <value>Play in mini view</value>
   </data>
   <data name="ShowAudioSelectionMenu" xml:space="preserve">
     <value>Show audio selection menu</value>

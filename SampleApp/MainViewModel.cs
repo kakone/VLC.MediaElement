@@ -4,9 +4,12 @@ using System;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using VLC;
+using Windows.ApplicationModel.Core;
 using Windows.Storage;
 using Windows.Storage.AccessCache;
 using Windows.Storage.Pickers;
+using Windows.UI;
+using Windows.UI.ViewManagement;
 
 namespace SampleApp
 {
@@ -23,8 +26,10 @@ namespace SampleApp
         /// </summary>
         public MainViewModel()
         {
+            OnViewModeChanged();
             OpenFileCommand = new RelayCommand(OpenFile);
             OpenSubtitleFileCommand = new RelayCommand(OpenSubtitleFile, () => MediaSource != null);
+            ViewModeChangedCommand = new RelayCommand(OnViewModeChanged);
             MediaSource = VLC.MediaSource.CreateFromUri("http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_480p_surround-fix.avi");
             Title = "Big Buck Bunny";
         }
@@ -67,6 +72,11 @@ namespace SampleApp
         /// </summary>
         public RelayCommand OpenSubtitleFileCommand { get; }
 
+        /// <summary>
+        /// Gets the command for the view mode changes.
+        /// </summary>
+        public ICommand ViewModeChangedCommand { get; }
+
         private async Task<StorageFile> PickSingleFileAsync(string fileTypeFilter, string token)
         {
             var fileOpenPicker = new FileOpenPicker()
@@ -103,6 +113,23 @@ namespace SampleApp
             if (file != null)
             {
                 MediaSource.ExternalTimedTextSources.Add(TimedTextSource.CreateFromUri($"winrt://{SUBTITLE_FILE_TOKEN}"));
+            }
+        }
+
+        private void OnViewModeChanged()
+        {
+            var applicationView = ApplicationView.GetForCurrentView();
+            var applicationViewTitleBar = applicationView.TitleBar;
+            var coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
+            if (applicationView.ViewMode == ApplicationViewMode.CompactOverlay)
+            {
+                applicationViewTitleBar.ButtonBackgroundColor = Colors.Transparent;
+                coreTitleBar.ExtendViewIntoTitleBar = true;
+            }
+            else
+            {
+                applicationViewTitleBar.ButtonBackgroundColor = null;
+                coreTitleBar.ExtendViewIntoTitleBar = false;
             }
         }
     }

@@ -798,6 +798,10 @@
                                                         <MenuFlyout x:Name='DeinterlaceModeMenu' />
                                                     </AppBarButton.Flyout>
                                                 </AppBarButton>
+                                                <AppBarButton x:Name='CompactOverlayModeButton'
+                                                              Style='{StaticResource AppBarButtonStyle}' Icon="NewWindow"
+                                                              MediaTransportControlsHelper.DropoutOrder='12'>
+                                                </AppBarButton>
                                                 <AppBarButton x:Name='FullWindowButton'
                                                 Style='{StaticResource AppBarButtonStyle}'
                                                 MediaTransportControlsHelper.DropoutOrder='17'>

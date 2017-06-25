@@ -28,6 +28,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
+    <Compile Include="DeferrableCancelEventArgs.cs" />
     <Compile Include="DeferrableEventArgs.cs" />
     <Compile Include="DeinterlaceMode.cs" />
     <Compile Include="FrameworkElementExtensions.cs" />
