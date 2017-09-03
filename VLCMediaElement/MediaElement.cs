@@ -12,6 +12,7 @@ using Windows.ApplicationModel;
 using Windows.Foundation.Diagnostics;
 using Windows.Media.Devices;
 using Windows.Storage;
+using Windows.System.Profile;
 using Windows.UI.Core;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
@@ -73,10 +74,21 @@ namespace VLC
         private SwapChainPanel SwapChainPanel { get; set; }
         private Instance Instance { get; set; }
         private Media Media { get; set; }
-        private AudioDeviceHandler AudioDevice { get; set; }
         private LoggingChannel LoggingChannel { get; set; }
         private AsyncLock SourceChangedMutex { get; } = new AsyncLock();
         private bool UpdatingPosition { get; set; }
+
+        private float VideoScale
+        {
+            get => MediaPlayer.scale();
+            set
+            {
+                if (VideoScale != value)
+                {
+                    MediaPlayer.setScale(value);
+                }
+            }
+        }
 
         private string _audioDeviceId;
         private string AudioDeviceId
@@ -442,7 +454,7 @@ namespace VLC
                     "--no-stats",
                     "--avcodec-fast",
                     "--subsdec-encoding",
-                    "",
+                    AnalyticsInfo.VersionInfo.DeviceFamily == "Windows.Mobile" ? "--deinterlace-mode=bob" : String.Empty,
                     "--aout=winstore",
                     $"--keystore-file={Path.Combine(ApplicationData.Current.LocalFolder.Path, KeyStoreFilename)}"
                 }, swapChainPanel);
@@ -597,14 +609,19 @@ namespace VLC
 
         private async Task UpdateZoom()
         {
+            if (MediaPlayer == null)
+            {
+                return;
+            }
+
+            var swapChainPanel = SwapChainPanel;
+            var screenWidth = swapChainPanel.ActualWidth;
+            var screenHeight = swapChainPanel.ActualHeight;
+
             if ((Stretch == Stretch.None || Stretch == Stretch.Uniform) && !Zoom ||
                 (Stretch == Stretch.Fill || Stretch == Stretch.UniformToFill && Zoom))
             {
-                var renderTransform = SwapChainPanel.RenderTransform;
-                if (renderTransform != null && (!(renderTransform is MatrixTransform matrix) || matrix.Matrix != Matrix.Identity))
-                {
-                    SwapChainPanel.RenderTransform = null;
-                }
+                VideoScale = 0;
             }
             else
             {
@@ -628,28 +645,17 @@ namespace VLC
                     await UpdateZoom();
                     return;
                 }
-                var swapChainPanel = SwapChainPanel;
-                var screenWidth = swapChainPanel.ActualWidth;
-                var screenHeight = swapChainPanel.ActualHeight;
+
                 var sarDen = videoTrack.sarDen();
                 var sarNum = videoTrack.sarNum();
-                var var = (sarDen == sarNum ? (double)videoWidth / videoHeight : ((double)videoWidth * sarNum / sarDen) / videoHeight);
-                var screenar = screenWidth / screenHeight;
-
-                var scaleTransform = new ScaleTransform()
+                if (sarNum != sarDen)
                 {
-                    CenterX = screenWidth / 2,
-                    CenterY = screenHeight / 2
-                };
-                var scale = (var > screenar ? var / screenar : screenar / var);
-                scaleTransform.ScaleX = scale;
-                scaleTransform.ScaleY = scale;
-                var renderTransform = swapChainPanel.RenderTransform as ScaleTransform;
-                if (renderTransform == null || renderTransform.CenterX != scaleTransform.CenterX || renderTransform.CenterY != scaleTransform.CenterY ||
-                    renderTransform.ScaleX != renderTransform.ScaleX || renderTransform.ScaleY != renderTransform.ScaleY)
-                {
-                    swapChainPanel.RenderTransform = scaleTransform;
+                    videoWidth = videoWidth * sarNum / sarDen;
                 }
+
+                var var = (double)videoWidth / videoHeight;
+                var screenar = screenWidth / screenHeight;
+                VideoScale = (float)(screenar >= var ? screenWidth / videoWidth : screenHeight / videoHeight);
             }
         }
 
@@ -669,11 +675,10 @@ namespace VLC
 
         private void SetAudioDevice()
         {
-            var mediaPlayer = MediaPlayer;
-            if (mediaPlayer != null)
+            var audioDeviceId = AudioDeviceId;
+            if (!String.IsNullOrEmpty(audioDeviceId))
             {
-                AudioDevice = new AudioDeviceHandler(AudioDeviceId);
-                mediaPlayer.outputDeviceSet(AudioDevice.audioClient());
+                MediaPlayer?.outputDeviceSet(audioDeviceId);
             }
         }
 
@@ -737,7 +742,12 @@ namespace VLC
                     type = FromType.FromPath;
                 }
                 var media = new Media(Instance, source, type);
-                media.addOption($":avcodec-hw={(HardwareAcceleration ? "d3d11va" : "none")}");
+                var hw = HardwareAcceleration;
+                media.addOption($":avcodec-hw={(hw ? "d3d11va" : "none")}");
+                if (AnalyticsInfo.VersionInfo.DeviceFamily == "Windows.Mobile")
+                {
+                    media.addOption($":avcodec-threads={Convert.ToInt32(hw)}");
+                }
                 var options = Options;
                 if (options != null)
                 {
