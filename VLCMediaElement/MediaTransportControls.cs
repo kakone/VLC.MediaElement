@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Windows.ApplicationModel.Resources;
+using Windows.Devices.Input;
 using Windows.Foundation;
 using Windows.Foundation.Metadata;
 using Windows.UI.Core;
@@ -678,17 +679,24 @@ namespace VLC
         {
             Show();
 
-            var element = (UIElement)sender;
-            var renderSize = element.RenderSize;
-            var currentWindow = Window.Current;
-            var bounds = currentWindow.Bounds;
-            var pointerPosition = currentWindow.CoreWindow.PointerPosition;
-            pointerPosition = new Point(pointerPosition.X - bounds.X, pointerPosition.Y - bounds.Y);
-            var currentPosition = element.TransformToVisual(currentWindow.Content).TransformPoint(new Point(0, 0));
-            if (pointerPosition.X < currentPosition.X || pointerPosition.X >= currentPosition.X + renderSize.Width ||
-                pointerPosition.Y < currentPosition.Y || pointerPosition.Y >= currentPosition.Y + renderSize.Height)
+            if (e.Pointer.PointerDeviceType == PointerDeviceType.Touch)
             {
                 StartTimer();
+            }
+            else
+            {
+                var element = (UIElement)sender;
+                var renderSize = element.RenderSize;
+                var currentWindow = Window.Current;
+                var bounds = currentWindow.Bounds;
+                var pointerPosition = currentWindow.CoreWindow.PointerPosition;
+                pointerPosition = new Point(pointerPosition.X - bounds.X, pointerPosition.Y - bounds.Y);
+                var currentPosition = element.TransformToVisual(currentWindow.Content).TransformPoint(new Point(0, 0));
+                if (pointerPosition.X < currentPosition.X || pointerPosition.X >= currentPosition.X + renderSize.Width ||
+                    pointerPosition.Y < currentPosition.Y || pointerPosition.Y >= currentPosition.Y + renderSize.Height)
+                {
+                    StartTimer();
+                }
             }
         }
 
