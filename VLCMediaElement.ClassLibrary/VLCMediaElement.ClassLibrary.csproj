@@ -83,10 +83,10 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="libVLCX">
-      <Version>0.9.5</Version>
+      <Version>0.9.6</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
-      <Version>5.4.0</Version>
+      <Version>6.0.1</Version>
     </PackageReference>
     <PackageReference Include="Nito.AsyncEx">
       <Version>4.0.1</Version>

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using VLC;
 using Windows.ApplicationModel.Core;
+using Windows.Foundation.Metadata;
 using Windows.Storage;
 using Windows.Storage.AccessCache;
 using Windows.Storage.Pickers;
@@ -118,18 +119,21 @@ namespace SampleApp
 
         private void OnViewModeChanged()
         {
-            var applicationView = ApplicationView.GetForCurrentView();
-            var applicationViewTitleBar = applicationView.TitleBar;
-            var coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
-            if (applicationView.ViewMode == ApplicationViewMode.CompactOverlay)
+            if (ApiInformation.IsApiContractPresent("Windows.Foundation.UniversalApiContract", 4))
             {
-                applicationViewTitleBar.ButtonBackgroundColor = Colors.Transparent;
-                coreTitleBar.ExtendViewIntoTitleBar = true;
-            }
-            else
-            {
-                applicationViewTitleBar.ButtonBackgroundColor = null;
-                coreTitleBar.ExtendViewIntoTitleBar = false;
+                var applicationView = ApplicationView.GetForCurrentView();
+                var applicationViewTitleBar = applicationView.TitleBar;
+                var coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
+                if (applicationView.ViewMode == ApplicationViewMode.CompactOverlay)
+                {
+                    applicationViewTitleBar.ButtonBackgroundColor = Colors.Transparent;
+                    coreTitleBar.ExtendViewIntoTitleBar = true;
+                }
+                else
+                {
+                    applicationViewTitleBar.ButtonBackgroundColor = null;
+                    coreTitleBar.ExtendViewIntoTitleBar = false;
+                }
             }
         }
     }

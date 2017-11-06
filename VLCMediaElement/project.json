@@ -1,7 +1,7 @@
 ﻿{
   "dependencies": {
-    "libVLCX": "0.9.5",
-    "Microsoft.NETCore.UniversalWindowsPlatform": "5.4.0",
+    "libVLCX": "0.9.6",
+    "Microsoft.NETCore.UniversalWindowsPlatform": "6.0.1",
     "Nito.AsyncEx": "4.0.1"
   },
   "frameworks": {

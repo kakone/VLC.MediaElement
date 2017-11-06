@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Windows.ApplicationModel.Resources;
 using Windows.Foundation;
+using Windows.Foundation.Metadata;
 using Windows.UI.Core;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
@@ -268,19 +269,21 @@ namespace VLC
             set { SetValue(IsFullWindowEnabledProperty, value); }
         }
 
+        private static bool IsCompactOverlayViewModeSupported =>
+            ApiInformation.IsApiContractPresent("Windows.Foundation.UniversalApiContract", 4) &&
+            ApplicationView.GetForCurrentView().IsViewModeSupported(ApplicationViewMode.CompactOverlay);
         /// <summary>
         /// Identifies the <see cref="IsCompactOverlayModeButtonVisible"/> dependency property.
         /// </summary>
         public static DependencyProperty IsCompactOverlayModeButtonVisibleProperty { get; } = DependencyProperty.Register("IsCompactOverlayModeButtonVisible", typeof(bool), typeof(MediaTransportControls),
-            new PropertyMetadata(ApplicationView.GetForCurrentView().IsViewModeSupported(ApplicationViewMode.CompactOverlay),
-                (d, e) => ((MediaTransportControls)d).UpdateCompactOverlayModeButton()));
+            new PropertyMetadata(IsCompactOverlayViewModeSupported, (d, e) => ((MediaTransportControls)d).UpdateCompactOverlayModeButton()));
         /// <summary>
         /// Gets or sets a value that indicates whether the full screen button is shown.
         /// </summary>
         public bool IsCompactOverlayModeButtonVisible
         {
             get { return (bool)GetValue(IsCompactOverlayModeButtonVisibleProperty); }
-            set { SetValue(IsCompactOverlayModeButtonVisibleProperty, value); }
+            set { SetValue(IsCompactOverlayModeButtonVisibleProperty, value && IsCompactOverlayViewModeSupported); }
         }
 
         /// <summary>
