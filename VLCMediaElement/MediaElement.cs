@@ -63,6 +63,26 @@ namespace VLC
         public event EventHandler<DeferrableEventArgs> CancelCurrentDialog;
 
         /// <summary>
+        /// Occurs before a message is logged.
+        /// </summary>
+        public event EventHandler<LogRoutedEventArgs> Logging;
+
+        /// <summary>
+        /// Occurs when the media stream has been validated and opened.
+        /// </summary>
+        public event EventHandler<RoutedEventArgs> MediaOpened;
+
+        /// <summary>
+        /// Occurs when the MediaElement finishes playing audio or video.
+        /// </summary>
+        public event EventHandler<RoutedEventArgs> MediaEnded;
+
+        /// <summary>
+        /// Occurs when there is an error associated with the media source.
+        /// </summary>
+        public event EventHandler<MediaFailedRoutedEventArgs> MediaFailed;
+
+        /// <summary>
         /// Instantiates a new instance of the MediaElement class.
         /// </summary>
         public MediaElement()
@@ -463,12 +483,7 @@ namespace VLC
                 (dialog, title, text, intermediate, position, cancel) => { },
                 OnCancelCurrentDialog,
                 (dialog, position, text) => { });
-            instance.logSet((param0, param1) =>
-                {
-                    var logLevel = (LogLevel)param0;
-                    Debug.WriteLine($"[VLC {logLevel}] {param1}");
-                    LoggingChannel.LogMessage(param1, logLevel.ToLoggingLevel());
-                });
+            instance.logSet((param0, param1) => OnLog((LogLevel)param0, param1));
 
             await UpdateScale();
             UpdateDeinterlaceMode();
@@ -479,9 +494,18 @@ namespace VLC
             await OnMediaSourceChanged();
         }
 
+        private void OnLog(LogLevel level, string message)
+        {
+            Debug.WriteLine($"[VLC {level}] {message}");
+            var loggingLevel = level.ToLoggingLevel();
+            Logging?.Invoke(this, new LogRoutedEventArgs() { Level = loggingLevel, Message = message });
+            LoggingChannel.LogMessage(message, loggingLevel);
+        }
+
         private async void OnError(string title, string text)
         {
             await DispatcherRunAsync(() => TransportControls?.SetError($"{title}{Environment.NewLine}{text}"));
+            MediaFailed?.Invoke(this, new MediaFailedRoutedEventArgs() { ErrorTitle = title, ErrorMessage = text });
             await logSemaphoreSlim.WaitAsync();
             try
             {
@@ -592,6 +616,19 @@ namespace VLC
         {
             await SetPosition(time);
             await DispatcherRunAsync(() => TransportControls?.OnTimeChanged(time));
+        }
+
+        private async void OnOpening()
+        {
+            await UpdateState(MediaElementState.Opening);
+            MediaOpened?.Invoke(this, new RoutedEventArgs());
+        }
+
+        private async void OnEndReached()
+        {
+            await ClearMediaAsync();
+            await UpdateState(MediaElementState.Closed);
+            MediaEnded?.Invoke(this, new RoutedEventArgs());
         }
 
         private async Task UpdateState(MediaElementState state)
@@ -765,11 +802,11 @@ namespace VLC
                 var mediaPlayer = new MediaPlayer(media);
                 var eventManager = mediaPlayer.eventManager();
                 eventManager.OnBuffering += async p => await UpdateState(MediaElementState.Buffering);
-                eventManager.OnOpening += async () => await UpdateState(MediaElementState.Opening);
+                eventManager.OnOpening += OnOpening;
                 eventManager.OnPlaying += async () => await UpdateState(MediaElementState.Playing);
                 eventManager.OnPaused += async () => await UpdateState(MediaElementState.Paused);
                 eventManager.OnStopped += async () => await UpdateState(MediaElementState.Stopped);
-                eventManager.OnEndReached += async () => { await ClearMediaAsync(); await UpdateState(MediaElementState.Closed); };
+                eventManager.OnEndReached += OnEndReached;
                 eventManager.OnPositionChanged += EventManager_OnPositionChanged;
                 eventManager.OnVoutCountChanged += async p => await DispatcherRunAsync(async () => { await UpdateZoom(); });
                 eventManager.OnTrackAdded += EventManager_OnTrackAdded;

@@ -513,7 +513,10 @@ namespace VLC
 
             ApplicationView.GetForCurrentView().VisibleBoundsChanged += (sender, args) => UpdateFullWindowState();
             UpdateFullWindowState();
-            UpdateCompactOverlayModeState();
+            if (IsCompactOverlayViewModeSupported)
+            {
+                UpdateCompactOverlayModeState();
+            }
 
             Timer.Tick += Timer_Tick;
         }

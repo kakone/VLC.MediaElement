@@ -39,6 +39,8 @@
     <Compile Include="LogLevel.cs" />
     <Compile Include="LogLevelExtensions.cs" />
     <Compile Include="MediaElement.cs" />
+    <Compile Include="LogRoutedEventArgs.cs" />
+    <Compile Include="MediaFailedRoutedEventArgs.cs" />
     <Compile Include="MediaSource.cs" />
     <Compile Include="MediaTransportControls.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

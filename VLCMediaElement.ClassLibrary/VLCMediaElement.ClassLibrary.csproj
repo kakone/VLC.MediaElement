@@ -58,8 +58,14 @@
     <Compile Include="..\VLCMediaElement\LogLevelExtensions.cs">
       <Link>LogLevelExtensions.cs</Link>
     </Compile>
+    <Compile Include="..\VLCMediaElement\LogRoutedEventArgs.cs">
+      <Link>LogRoutedEventArgs.cs</Link>
+    </Compile>
     <Compile Include="..\VLCMediaElement\MediaElement.cs">
       <Link>MediaElement.cs</Link>
+    </Compile>
+    <Compile Include="..\VLCMediaElement\MediaFailedRoutedEventArgs.cs">
+      <Link>MediaFailedRoutedEventArgs.cs</Link>
     </Compile>
     <Compile Include="..\VLCMediaElement\MediaSource.cs">
       <Link>MediaSource.cs</Link>
