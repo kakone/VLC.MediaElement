@@ -1,6 +1,4 @@
-﻿using libVLCX;
-using Nito.AsyncEx;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
@@ -8,6 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using libVLCX;
+using Nito.AsyncEx;
 using Windows.ApplicationModel;
 using Windows.Foundation.Diagnostics;
 using Windows.Media.Devices;
@@ -30,7 +30,7 @@ namespace VLC
 #endif
     class MediaElement : Control
     {
-        private static SemaphoreSlim logSemaphoreSlim = new SemaphoreSlim(1, 1);
+        private static SemaphoreSlim s_logSemaphoreSlim = new SemaphoreSlim(1, 1);
 
         /// <summary>
         /// Occurs when zoom has changed.
@@ -113,7 +113,7 @@ namespace VLC
         private string _audioDeviceId;
         private string AudioDeviceId
         {
-            get { return _audioDeviceId; }
+            get => _audioDeviceId;
             set
             {
                 if (_audioDeviceId != value)
@@ -142,10 +142,7 @@ namespace VLC
         /// <summary>
         /// Gets the current state.
         /// </summary>
-        internal MediaState State
-        {
-            get { return MediaPlayer?.state() ?? MediaState.NothingSpecial; }
-        }
+        internal MediaState State => MediaPlayer?.state() ?? MediaState.NothingSpecial;
 
         /// <summary>
         /// Identifies the <see cref="IsMuted"/> dependency property.
@@ -157,8 +154,8 @@ namespace VLC
         /// </summary>
         public bool IsMuted
         {
-            get { return (bool)GetValue(IsMutedProperty); }
-            set { SetValue(IsMutedProperty, value); }
+            get => (bool)GetValue(IsMutedProperty);
+            set => SetValue(IsMutedProperty, value);
         }
 
         /// <summary>
@@ -171,8 +168,8 @@ namespace VLC
         /// </summary>
         public TimeSpan Position
         {
-            get { return (TimeSpan)GetValue(PositionProperty); }
-            set { SetValue(PositionProperty, value); }
+            get => (TimeSpan)GetValue(PositionProperty);
+            set => SetValue(PositionProperty, value);
         }
 
         /// <summary>
@@ -185,8 +182,8 @@ namespace VLC
         /// </summary>
         public int Volume
         {
-            get { return (int)GetValue(VolumeProperty); }
-            set { SetValue(VolumeProperty, value); }
+            get => (int)GetValue(VolumeProperty);
+            set => SetValue(VolumeProperty, value);
         }
 
         /// <summary>
@@ -199,8 +196,8 @@ namespace VLC
         /// </summary>
         public MediaElementState CurrentState
         {
-            get { return (MediaElementState)GetValue(CurrentStateProperty); }
-            private set { SetValue(CurrentStateProperty, value); }
+            get => (MediaElementState)GetValue(CurrentStateProperty);
+            private set => SetValue(CurrentStateProperty, value);
         }
 
         /// <summary>
@@ -213,8 +210,8 @@ namespace VLC
         /// </summary>
         public MediaTransportControls TransportControls
         {
-            get { return (MediaTransportControls)GetValue(TransportControlsProperty); }
-            set { SetValue(TransportControlsProperty, value); }
+            get => (MediaTransportControls)GetValue(TransportControlsProperty);
+            set => SetValue(TransportControlsProperty, value);
         }
 
         /// <summary>
@@ -227,22 +224,22 @@ namespace VLC
         /// </summary>
         public bool AreTransportControlsEnabled
         {
-            get { return (bool)GetValue(AreTransportControlsEnabledProperty); }
-            set { SetValue(AreTransportControlsEnabledProperty, value); }
+            get => (bool)GetValue(AreTransportControlsEnabledProperty);
+            set => SetValue(AreTransportControlsEnabledProperty, value);
         }
 
         /// <summary>
         /// Identifies the <see cref="Zoom"/> dependency property.
         /// </summary>
         public static DependencyProperty ZoomProperty { get; } = DependencyProperty.Register("Zoom", typeof(bool), typeof(MediaElement),
-            new PropertyMetadata(false, async (d, e) => await ((MediaElement)d).OnZoomChanged()));
+            new PropertyMetadata(false, async (d, e) => await ((MediaElement)d).OnZoomChangedAsync()));
         /// <summary>
         /// Gets or sets a value indicating whether the video is zoomed.
         /// </summary>
         public bool Zoom
         {
-            get { return (bool)GetValue(ZoomProperty); }
-            set { SetValue(ZoomProperty, value); }
+            get => (bool)GetValue(ZoomProperty);
+            set => SetValue(ZoomProperty, value);
         }
 
         /// <summary>
@@ -255,22 +252,22 @@ namespace VLC
         /// </summary>
         public DeinterlaceMode DeinterlaceMode
         {
-            get { return (DeinterlaceMode)GetValue(DeinterlaceModeProperty); }
-            set { SetValue(DeinterlaceModeProperty, value); }
+            get => (DeinterlaceMode)GetValue(DeinterlaceModeProperty);
+            set => SetValue(DeinterlaceModeProperty, value);
         }
 
         /// <summary>
         /// Identifies the <see cref="HardwareAcceleration"/> dependency property.
         /// </summary>
         public static DependencyProperty HardwareAccelerationProperty { get; } = DependencyProperty.Register("HardwareAcceleration", typeof(bool), typeof(MediaElement),
-            new PropertyMetadata(false));
+            new PropertyMetadata(true, (d, e) => ((MediaElement)d).TransportControls?.UpdateDeinterlaceModeButton()));
         /// <summary>
         /// Gets or sets a value indicating whether the hardware acceleration must be used.
         /// </summary>
         public bool HardwareAcceleration
         {
-            get { return (bool)GetValue(HardwareAccelerationProperty); }
-            set { SetValue(HardwareAccelerationProperty, value); }
+            get => (bool)GetValue(HardwareAccelerationProperty);
+            set => SetValue(HardwareAccelerationProperty, value);
         }
 
         /// <summary>
@@ -283,22 +280,22 @@ namespace VLC
         /// </summary>
         public string Source
         {
-            get { return GetValue(SourceProperty) as string; }
-            set { SetValue(SourceProperty, value); }
+            get => GetValue(SourceProperty) as string;
+            set => SetValue(SourceProperty, value);
         }
 
         /// <summary>
         /// Identifies the <see cref="MediaSource"/> dependency property.
         /// </summary>
         public static DependencyProperty MediaSourceProperty { get; } = DependencyProperty.Register("MediaSource", typeof(IMediaSource), typeof(MediaElement),
-            new PropertyMetadata(null, async (d, e) => await ((MediaElement)d).OnMediaSourceChanged(e.OldValue as IMediaSource, e.NewValue as IMediaSource)));
+            new PropertyMetadata(null, async (d, e) => await ((MediaElement)d).OnMediaSourceChangedAsync(e.OldValue as IMediaSource, e.NewValue as IMediaSource)));
         /// <summary>
         /// Gets or sets a media source on the MediaElement.
         /// </summary>
         public IMediaSource MediaSource
         {
-            get { return GetValue(MediaSourceProperty) as IMediaSource; }
-            set { SetValue(MediaSourceProperty, value); }
+            get => GetValue(MediaSourceProperty) as IMediaSource;
+            set => SetValue(MediaSourceProperty, value);
         }
 
         /// <summary>
@@ -307,12 +304,12 @@ namespace VLC
         public static DependencyProperty AutoPlayProperty { get; } = DependencyProperty.Register("AutoPlay", typeof(bool), typeof(MediaElement),
             new PropertyMetadata(true));
         /// <summary>
-        /// Gets or sets a value that indicates whether media will begin playback automatically when the <see cref="Source"/> property is set.
+        /// Gets or sets a value indicating whether media will begin playback automatically when the <see cref="Source"/> property is set.
         /// </summary>
         public bool AutoPlay
         {
-            get { return (bool)GetValue(AutoPlayProperty); }
-            set { SetValue(AutoPlayProperty, value); }
+            get => (bool)GetValue(AutoPlayProperty);
+            set => SetValue(AutoPlayProperty, value);
         }
 
         /// <summary>
@@ -325,8 +322,8 @@ namespace VLC
         /// </summary>
         public ImageSource PosterSource
         {
-            get { return (ImageSource)GetValue(PosterSourceProperty); }
-            set { SetValue(PosterSourceProperty, value); }
+            get => (ImageSource)GetValue(PosterSourceProperty);
+            set => SetValue(PosterSourceProperty, value);
         }
 
         /// <summary>
@@ -339,8 +336,8 @@ namespace VLC
         /// </summary>
         public Stretch Stretch
         {
-            get { return (Stretch)GetValue(StretchProperty); }
-            set { SetValue(StretchProperty, value); }
+            get => (Stretch)GetValue(StretchProperty);
+            set => SetValue(StretchProperty, value);
         }
 
         /// <summary>
@@ -353,8 +350,8 @@ namespace VLC
         /// </summary>
         public IDictionary<string, object> Options
         {
-            get { return (IDictionary<string, object>)GetValue(OptionsProperty); }
-            set { SetValue(OptionsProperty, value); }
+            get => (IDictionary<string, object>)GetValue(OptionsProperty);
+            set => SetValue(OptionsProperty, value);
         }
 
         /// <summary>
@@ -368,10 +365,10 @@ namespace VLC
 
             var swapChainPanel = (SwapChainPanel)GetTemplateChild("SwapChainPanel");
             SwapChainPanel = swapChainPanel;
-            swapChainPanel.CompositionScaleChanged += async (sender, e) => await UpdateScale();
-            swapChainPanel.SizeChanged += async (sender, e) => await UpdateSize();
+            swapChainPanel.CompositionScaleChanged += async (sender, e) => await UpdateScaleAsync();
+            swapChainPanel.SizeChanged += async (sender, e) => await UpdateSizeAsync();
 
-            Task.Run(() => DispatcherRunAsync(async () => await Init(swapChainPanel)));
+            Task.Run(() => DispatcherRunAsync(async () => await InitAsync(swapChainPanel)));
         }
 
         private static void OnTransportControlsPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -433,10 +430,10 @@ namespace VLC
             CurrentStateChanged?.Invoke(this, new RoutedEventArgs());
         }
 
-        private async Task OnZoomChanged()
+        private async Task OnZoomChangedAsync()
         {
             ZoomChanged?.Invoke(this, new RoutedEventArgs());
-            await UpdateZoom();
+            await UpdateZoomAsync();
             TransportControls?.UpdateZoomButton();
         }
 
@@ -462,7 +459,7 @@ namespace VLC
             await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, agileCallback);
         }
 
-        private async Task Init(SwapChainPanel swapChainPanel)
+        private async Task InitAsync(SwapChainPanel swapChainPanel)
         {
             LoggingChannel = Logger.AddLoggingChannel(Name);
             var instance = new Instance(new List<string>
@@ -474,24 +471,24 @@ namespace VLC
                     "--no-stats",
                     "--avcodec-fast",
                     "--subsdec-encoding",
-                    AnalyticsInfo.VersionInfo.DeviceFamily == "Windows.Mobile" ? "--deinterlace-mode=bob" : String.Empty,
+                    AnalyticsInfo.VersionInfo.DeviceFamily == "Windows.Mobile" ? "--deinterlace-mode=bob" : string.Empty,
                     "--aout=winstore",
                     $"--keystore-file={Path.Combine(ApplicationData.Current.LocalFolder.Path, KeyStoreFilename)}"
                 }, swapChainPanel);
             Instance = instance;
-            instance.setDialogHandlers(OnError, OnShowLoginDialog, OnShowDialog,
+            instance.setDialogHandlers(OnErrorAsync, OnShowLoginDialogAsync, OnShowDialogAsync,
                 (dialog, title, text, intermediate, position, cancel) => { },
-                OnCancelCurrentDialog,
+                OnCancelCurrentDialogAsync,
                 (dialog, position, text) => { });
             instance.logSet((param0, param1) => OnLog((LogLevel)param0, param1));
 
-            await UpdateScale();
+            await UpdateScaleAsync();
             UpdateDeinterlaceMode();
 
             AudioDeviceId = MediaDevice.GetDefaultAudioRenderId(AudioDeviceRole.Default);
             MediaDevice.DefaultAudioRenderDeviceChanged += (sender, e) => { if (e.Role == AudioDeviceRole.Default) { AudioDeviceId = e.Id; } };
 
-            await OnMediaSourceChanged();
+            await OnMediaSourceChangedAsync();
         }
 
         private void OnLog(LogLevel level, string message)
@@ -502,11 +499,11 @@ namespace VLC
             LoggingChannel.LogMessage(message, loggingLevel);
         }
 
-        private async void OnError(string title, string text)
+        private async void OnErrorAsync(string title, string text)
         {
             await DispatcherRunAsync(() => TransportControls?.SetError($"{title}{Environment.NewLine}{text}"));
             MediaFailed?.Invoke(this, new MediaFailedRoutedEventArgs() { ErrorTitle = title, ErrorMessage = text });
-            await logSemaphoreSlim.WaitAsync();
+            await s_logSemaphoreSlim.WaitAsync();
             try
             {
                 await Logger.SaveToFileAsync(LogFilename);
@@ -516,11 +513,11 @@ namespace VLC
             }
             finally
             {
-                logSemaphoreSlim.Release();
+                s_logSemaphoreSlim.Release();
             }
         }
 
-        private async void OnShowLoginDialog(Dialog dialog, string title, string text, string defaultUserName, bool askToStore)
+        private async void OnShowLoginDialogAsync(Dialog dialog, string title, string text, string defaultUserName, bool askToStore)
         {
             LoginDialogResult dialogResult;
             var showLoginDialog = ShowLoginDialog;
@@ -546,7 +543,7 @@ namespace VLC
             }
         }
 
-        private async void OnShowDialog(Dialog dialog, string title, string text, Question qType, string cancel, string action1, string action2)
+        private async void OnShowDialogAsync(Dialog dialog, string title, string text, Question qType, string cancel, string action1, string action2)
         {
             int? selectedActionIndex;
             var showDialog = ShowDialog;
@@ -572,7 +569,7 @@ namespace VLC
             }
         }
 
-        private async void OnCancelCurrentDialog(Dialog dialog)
+        private async void OnCancelCurrentDialogAsync(Dialog dialog)
         {
             var cancelCurrentDialog = CancelCurrentDialog;
             if (cancelCurrentDialog != null)
@@ -584,7 +581,7 @@ namespace VLC
             dialog.dismiss();
         }
 
-        private async void EventManager_OnTrackAdded(TrackType trackType, int trackId)
+        private async void EventManager_OnTrackAddedAsync(TrackType trackType, int trackId)
         {
             IList<TrackDescription> source;
             switch (trackType)
@@ -600,38 +597,38 @@ namespace VLC
             }
 
             var trackName = source?.FirstOrDefault(td => td.id() == trackId)?.name();
-            if (!String.IsNullOrWhiteSpace(trackName))
+            if (!string.IsNullOrWhiteSpace(trackName))
             {
                 await DispatcherRunAsync(() => TransportControls?.OnTrackAdded(trackType, trackId, trackName));
             }
         }
 
-        private async void EventManager_OnPositionChanged(float position)
+        private async void EventManager_OnPositionChangedAsync(float position)
         {
-            await UpdateState(MediaElementState.Playing);
+            await UpdateStateAsync(MediaElementState.Playing);
             await DispatcherRunAsync(() => TransportControls?.OnPositionChanged(position));
         }
 
-        private async void EventManager_OnTimeChanged(long time)
+        private async void EventManager_OnTimeChangedAsync(long time)
         {
-            await SetPosition(time);
+            await SetPositionAsync(time);
             await DispatcherRunAsync(() => TransportControls?.OnTimeChanged(time));
         }
 
-        private async void OnOpening()
+        private async void OnOpeningAsync()
         {
-            await UpdateState(MediaElementState.Opening);
+            await UpdateStateAsync(MediaElementState.Opening);
             MediaOpened?.Invoke(this, new RoutedEventArgs());
         }
 
-        private async void OnEndReached()
+        private async void OnEndReachedAsync()
         {
             await ClearMediaAsync();
-            await UpdateState(MediaElementState.Closed);
+            await UpdateStateAsync(MediaElementState.Closed);
             MediaEnded?.Invoke(this, new RoutedEventArgs());
         }
 
-        private async Task UpdateState(MediaElementState state)
+        private async Task UpdateStateAsync(MediaElementState state)
         {
             await DispatcherRunAsync(() =>
             {
@@ -644,7 +641,7 @@ namespace VLC
             });
         }
 
-        private async Task UpdateZoom()
+        private async Task UpdateZoomAsync()
         {
             if (MediaPlayer == null)
             {
@@ -679,7 +676,7 @@ namespace VLC
                 if (videoWidth == 0 || videoHeight == 0)
                 {
                     await Task.Delay(500);
-                    await UpdateZoom();
+                    await UpdateZoomAsync();
                     return;
                 }
 
@@ -696,24 +693,24 @@ namespace VLC
             }
         }
 
-        private async Task UpdateSize()
+        private async Task UpdateSizeAsync()
         {
             var scp = SwapChainPanel;
             Instance?.UpdateSize((float)(scp.ActualWidth * scp.CompositionScaleX), (float)(scp.ActualHeight * scp.CompositionScaleY));
-            await UpdateZoom();
+            await UpdateZoomAsync();
         }
 
-        private async Task UpdateScale()
+        private async Task UpdateScaleAsync()
         {
             var scp = SwapChainPanel;
             Instance?.UpdateScale(scp.CompositionScaleX, scp.CompositionScaleY);
-            await UpdateSize();
+            await UpdateSizeAsync();
         }
 
         private void SetAudioDevice()
         {
             var audioDeviceId = AudioDeviceId;
-            if (!String.IsNullOrEmpty(audioDeviceId))
+            if (!string.IsNullOrEmpty(audioDeviceId))
             {
                 MediaPlayer?.outputDeviceSet(audioDeviceId);
             }
@@ -721,12 +718,12 @@ namespace VLC
 
         private async Task ClearMediaAsync()
         {
-            await SetPosition(0);
+            await SetPositionAsync(0);
             Media = null;
             MediaPlayer = null;
         }
 
-        private async Task OnMediaSourceChanged(IMediaSource oldValue, IMediaSource newValue)
+        private async Task OnMediaSourceChangedAsync(IMediaSource oldValue, IMediaSource newValue)
         {
             if (DesignMode.DesignModeEnabled)
             {
@@ -742,10 +739,10 @@ namespace VLC
                 ((INotifyCollectionChanged)newValue.ExternalTimedTextSources).CollectionChanged += ExternalTimedTextSourcesCollectionChanged;
             }
 
-            await OnMediaSourceChanged();
+            await OnMediaSourceChangedAsync();
         }
 
-        private async Task OnMediaSourceChanged(bool forcePlay = false)
+        private async Task OnMediaSourceChangedAsync(bool forcePlay = false)
         {
             if (Instance == null || DesignMode.DesignModeEnabled)
             {
@@ -766,7 +763,7 @@ namespace VLC
 
                 var source = mediaSource.Uri;
                 FromType type;
-                if (!Uri.TryCreate(source, UriKind.RelativeOrAbsolute, out Uri location) || location.IsAbsoluteUri && !location.IsFile)
+                if (!Uri.TryCreate(source, UriKind.RelativeOrAbsolute, out var location) || location.IsAbsoluteUri && !location.IsFile)
                 {
                     type = FromType.FromLocation;
                 }
@@ -801,26 +798,27 @@ namespace VLC
 
                 var mediaPlayer = new MediaPlayer(media);
                 var eventManager = mediaPlayer.eventManager();
-                eventManager.OnBuffering += async p => await UpdateState(MediaElementState.Buffering);
-                eventManager.OnOpening += OnOpening;
-                eventManager.OnPlaying += async () => await UpdateState(MediaElementState.Playing);
-                eventManager.OnPaused += async () => await UpdateState(MediaElementState.Paused);
-                eventManager.OnStopped += async () => await UpdateState(MediaElementState.Stopped);
-                eventManager.OnEndReached += OnEndReached;
-                eventManager.OnPositionChanged += EventManager_OnPositionChanged;
-                eventManager.OnVoutCountChanged += async p => await DispatcherRunAsync(async () => { await UpdateZoom(); });
-                eventManager.OnTrackAdded += EventManager_OnTrackAdded;
+                eventManager.OnBuffering += async p => await UpdateStateAsync(MediaElementState.Buffering);
+                eventManager.OnOpening += OnOpeningAsync;
+                eventManager.OnPlaying += async () => await UpdateStateAsync(MediaElementState.Playing);
+                eventManager.OnPaused += async () => await UpdateStateAsync(MediaElementState.Paused);
+                eventManager.OnStopped += async () => await UpdateStateAsync(MediaElementState.Stopped);
+                eventManager.OnEndReached += OnEndReachedAsync;
+                eventManager.OnPositionChanged += EventManager_OnPositionChangedAsync;
+                eventManager.OnVoutCountChanged += async p => await DispatcherRunAsync(async () => { await UpdateZoomAsync(); });
+                eventManager.OnTrackAdded += EventManager_OnTrackAddedAsync;
                 eventManager.OnTrackSelected += async (trackType, trackId) => await DispatcherRunAsync(() => TransportControls?.OnTrackSelected(trackType, trackId));
                 eventManager.OnTrackDeleted += async (trackType, trackId) => await DispatcherRunAsync(() => TransportControls?.OnTrackDeleted(trackType, trackId));
                 eventManager.OnLengthChanged += async length => await DispatcherRunAsync(() => TransportControls?.OnLengthChanged(length));
-                eventManager.OnTimeChanged += EventManager_OnTimeChanged;
+                eventManager.OnTimeChanged += EventManager_OnTimeChangedAsync;
                 eventManager.OnSeekableChanged += async seekable => await DispatcherRunAsync(() => TransportControls?.OnSeekableChanged(seekable));
                 MediaPlayer = mediaPlayer;
 
                 SetAudioDevice();
                 SetDeinterlaceMode();
 
-                if (forcePlay || AutoPlay) { Play(); }
+                if (forcePlay || AutoPlay)
+                { Play(); }
             }
         }
 
@@ -855,7 +853,7 @@ namespace VLC
         {
             if (Media == null)
             {
-                OnMediaSourceChanged(true).ConfigureAwait(false);
+                OnMediaSourceChangedAsync(true).ConfigureAwait(false);
             }
             else
             {
@@ -898,7 +896,7 @@ namespace VLC
             MediaPlayer?.setPosition(position);
         }
 
-        private async Task SetPosition(long time)
+        private async Task SetPositionAsync(long time)
         {
             await DispatcherRunAsync(() =>
             {

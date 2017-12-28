@@ -13,7 +13,7 @@
     <copyright>Copyright © 2017 Stéphane Mitermite</copyright>
     <tags>vlc libvlc mediaelement player video audio</tags>
     <dependencies>
-      <dependency id="libVLCX" version="0.9.6" />
+      <dependency id="libVLCX" version="0.9.7" />
       <dependency id="Nito.AsyncEx" version="4.0.1" />
     </dependencies>
     <contentFiles>

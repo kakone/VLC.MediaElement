@@ -1,8 +1,8 @@
-﻿using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Command;
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using GalaSoft.MvvmLight;
+using GalaSoft.MvvmLight.Command;
 using VLC;
 using Windows.ApplicationModel.Core;
 using Windows.Foundation.Metadata;
@@ -28,8 +28,8 @@ namespace SampleApp
         public MainViewModel()
         {
             OnViewModeChanged();
-            OpenFileCommand = new RelayCommand(OpenFile);
-            OpenSubtitleFileCommand = new RelayCommand(OpenSubtitleFile, () => MediaSource != null);
+            OpenFileCommand = new RelayCommand(OpenFileAsync);
+            OpenSubtitleFileCommand = new RelayCommand(OpenSubtitleFileAsync, () => MediaSource != null);
             ViewModeChangedCommand = new RelayCommand(OnViewModeChanged);
             MediaSource = VLC.MediaSource.CreateFromUri("http://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_480p_surround-fix.avi");
             Title = "Big Buck Bunny";
@@ -41,7 +41,7 @@ namespace SampleApp
         /// </summary>
         public IMediaSource MediaSource
         {
-            get { return _mediaSource; }
+            get => _mediaSource;
             private set
             {
                 if (_mediaSource != value)
@@ -59,8 +59,8 @@ namespace SampleApp
         /// </summary>
         public string Title
         {
-            get { return _title; }
-            private set { Set(nameof(Title), ref _title, value); }
+            get => _title;
+            private set => Set(nameof(Title), ref _title, value);
         }
 
         /// <summary>
@@ -93,7 +93,7 @@ namespace SampleApp
             return file;
         }
 
-        private async void OpenFile()
+        private async void OpenFileAsync()
         {
             var file = await PickSingleFileAsync("*", FILE_TOKEN);
             if (file != null)
@@ -103,7 +103,7 @@ namespace SampleApp
             }
         }
 
-        private async void OpenSubtitleFile()
+        private async void OpenSubtitleFileAsync()
         {
             var mediaSource = MediaSource;
             if (mediaSource == null)
