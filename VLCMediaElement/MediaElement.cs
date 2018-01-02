@@ -367,8 +367,6 @@ namespace VLC
             SwapChainPanel = swapChainPanel;
             swapChainPanel.CompositionScaleChanged += async (sender, e) => await UpdateScaleAsync();
             swapChainPanel.SizeChanged += async (sender, e) => await UpdateSizeAsync();
-
-            Task.Run(() => DispatcherRunAsync(async () => await InitAsync(swapChainPanel)));
         }
 
         private static void OnTransportControlsPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -695,16 +693,25 @@ namespace VLC
 
         private async Task UpdateSizeAsync()
         {
+            if (Instance == null)
+            {
+                await InitAsync(SwapChainPanel);
+            }
+
             var scp = SwapChainPanel;
-            Instance?.UpdateSize((float)(scp.ActualWidth * scp.CompositionScaleX), (float)(scp.ActualHeight * scp.CompositionScaleY));
+            Instance.UpdateSize((float)(scp.ActualWidth * scp.CompositionScaleX), (float)(scp.ActualHeight * scp.CompositionScaleY));
             await UpdateZoomAsync();
         }
 
         private async Task UpdateScaleAsync()
         {
-            var scp = SwapChainPanel;
-            Instance?.UpdateScale(scp.CompositionScaleX, scp.CompositionScaleY);
-            await UpdateSizeAsync();
+            var instance = Instance;
+            if (instance != null)
+            {
+                var scp = SwapChainPanel;
+                instance.UpdateScale(scp.CompositionScaleX, scp.CompositionScaleY);
+                await UpdateSizeAsync();
+            }
         }
 
         private void SetAudioDevice()
