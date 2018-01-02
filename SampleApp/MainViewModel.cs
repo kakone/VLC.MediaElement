@@ -124,7 +124,7 @@ namespace SampleApp
                 var applicationView = ApplicationView.GetForCurrentView();
                 var applicationViewTitleBar = applicationView.TitleBar;
                 var coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
-                if (applicationView.ViewMode == ApplicationViewMode.CompactOverlay)
+                if (applicationView.ViewMode == ApplicationViewMode.CompactOverlay && !applicationView.IsFullScreenMode)
                 {
                     applicationViewTitleBar.ButtonBackgroundColor = Colors.Transparent;
                     coreTitleBar.ExtendViewIntoTitleBar = true;

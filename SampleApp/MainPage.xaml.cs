@@ -12,15 +12,12 @@ namespace SampleApp
         /// </summary>
         public MainPage()
         {
-            this.InitializeComponent();
+            InitializeComponent();
         }
 
         /// <summary>
         /// Gets the main viewmodel.
         /// </summary>
-        public MainViewModel Vm
-        {
-            get { return DataContext as MainViewModel; }
-        }
+        public MainViewModel Vm => DataContext as MainViewModel;
     }
 }

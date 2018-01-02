@@ -26,6 +26,9 @@
                         <core:EventTriggerBehavior EventName="ViewModeChanged">
                             <core:InvokeCommandAction Command="{x:Bind Vm.ViewModeChangedCommand}" />
                         </core:EventTriggerBehavior>
+                        <core:EventTriggerBehavior EventName="SizeChanged">
+                            <core:InvokeCommandAction Command="{x:Bind Vm.ViewModeChangedCommand}" />
+                        </core:EventTriggerBehavior>
                     </i:Interaction.Behaviors>
                 </vlc:MediaTransportControls>
             </vlc:MediaElement.TransportControls>
