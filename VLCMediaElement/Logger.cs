@@ -16,7 +16,7 @@ namespace VLC
         /// <returns>a new logging channel.</returns>
         public static LoggingChannel AddLoggingChannel(string name)
         {
-            var loggingChannel = new LoggingChannel(String.IsNullOrWhiteSpace(name) ? "VLC" : name, null);
+            var loggingChannel = new LoggingChannel(string.IsNullOrWhiteSpace(name) ? "VLC" : name, null);
             LoggingSession.AddLoggingChannel(loggingChannel);
             return loggingChannel;
         }

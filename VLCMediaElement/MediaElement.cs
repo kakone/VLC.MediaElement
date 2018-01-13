@@ -469,6 +469,7 @@ namespace VLC
                     "--no-stats",
                     "--avcodec-fast",
                     "--subsdec-encoding",
+                    string.Empty,
                     AnalyticsInfo.VersionInfo.DeviceFamily == "Windows.Mobile" ? "--deinterlace-mode=bob" : string.Empty,
                     "--aout=winstore",
                     $"--keystore-file={Path.Combine(ApplicationData.Current.LocalFolder.Path, KeyStoreFilename)}"
@@ -621,9 +622,21 @@ namespace VLC
 
         private async void OnEndReachedAsync()
         {
-            await ClearMediaAsync();
-            await UpdateStateAsync(MediaElementState.Closed);
-            MediaEnded?.Invoke(this, new RoutedEventArgs());
+            await DispatcherRunAsync(async () =>
+            {
+                var autoRepeatEnabled = TransportControls?.AutoRepeatEnabled ?? false;
+                if (!autoRepeatEnabled)
+                {
+                    await ClearMediaAsync();
+                    await UpdateStateAsync(MediaElementState.Closed);
+                }
+                MediaEnded?.Invoke(this, new RoutedEventArgs());
+                if (autoRepeatEnabled)
+                {
+                    Stop();
+                    Play();
+                }
+            });
         }
 
         private async Task UpdateStateAsync(MediaElementState state)

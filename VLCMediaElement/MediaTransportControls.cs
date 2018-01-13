@@ -60,13 +60,14 @@ namespace VLC
         private Slider ProgressSlider { get; set; }
         private FrameworkElement TimeTextGrid { get; set; }
         private Slider VolumeSlider { get; set; }
-        private FrameworkElement DeinterlaceModeButton { get; set; }
+        private Button DeinterlaceModeButton { get; set; }
         private FrameworkElement PlayPauseButton { get; set; }
         private FrameworkElement PlayPauseButtonOnLeft { get; set; }
         private FrameworkElement ZoomButton { get; set; }
         private FrameworkElement FullWindowButton { get; set; }
         private FrameworkElement CompactOverlayModeButton { get; set; }
         private FrameworkElement StopButton { get; set; }
+        private ToggleButton RepeatButton { get; set; }
         private TextBlock TimeElapsedTextBlock { get; set; }
         private TextBlock TimeRemainingTextBlock { get; set; }
         private MenuFlyout DeinterlaceModeMenu { get; set; }
@@ -105,6 +106,11 @@ namespace VLC
                 }
             }
         }
+
+        /// <summary>
+        /// Gets a value indicating whether the playback will loop when the end is reached.
+        /// </summary>
+        internal bool AutoRepeatEnabled => RepeatButton.IsChecked == true;
 
         /// <summary>
         /// Gets or sets the media element.
@@ -331,6 +337,34 @@ namespace VLC
         }
 
         /// <summary>
+        /// Identifies the <see cref="IsRepeatButtonVisible"/> dependency property.
+        /// </summary>
+        public static DependencyProperty IsRepeatButtonVisibleProperty { get; } = DependencyProperty.Register("IsRepeatButtonVisible", typeof(bool), typeof(MediaTransportControls),
+            new PropertyMetadata(false, (d, e) => ((MediaTransportControls)d).UpdateRepeatButton()));
+        /// <summary>
+        ///Gets or sets a value that indicates whether the repeat button is shown.
+        /// </summary>
+        public bool IsRepeatButtonVisible
+        {
+            get => (bool)GetValue(IsRepeatButtonVisibleProperty);
+            set => SetValue(IsRepeatButtonVisibleProperty, value);
+        }
+
+        /// <summary>
+        /// Identifies the <see cref="IsRepeatEnabled"/> dependency property.
+        /// </summary>
+        public static DependencyProperty IsRepeatEnabledProperty { get; } = DependencyProperty.Register("IsRepeatEnabled", typeof(bool), typeof(MediaTransportControls),
+            new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdateRepeatButton()));
+        /// <summary>
+        /// Gets or sets a value that indicates whether a user repeat the playback of the media.
+        /// </summary>
+        public bool IsRepeatEnabled
+        {
+            get => (bool)GetValue(IsRepeatEnabledProperty);
+            set => SetValue(IsRepeatEnabledProperty, value);
+        }
+
+        /// <summary>
         /// Identifies the <see cref="Content"/> dependency property.
         /// </summary>
         public static DependencyProperty ContentProperty { get; } = DependencyProperty.Register("Content", typeof(object), typeof(MediaTransportControls),
@@ -342,20 +376,6 @@ namespace VLC
         {
             get => GetValue(ContentProperty);
             set => SetValue(ContentProperty, value);
-        }
-
-        /// <summary>
-        /// Identifies the <see cref="ControlPanelOpacity"/> dependency property.
-        /// </summary>
-        public static DependencyProperty ControlPanelOpacityProperty { get; } = DependencyProperty.Register("ControlPanelOpacity", typeof(double), typeof(MediaTransportControls),
-           new PropertyMetadata(1));
-        /// <summary>
-        /// Gets or sets the control panel opacity.
-        /// </summary>
-        public double ControlPanelOpacity
-        {
-            get => (double)GetValue(ControlPanelOpacityProperty);
-            set => SetValue(ControlPanelOpacityProperty, value);
         }
 
         /// <summary>
@@ -454,34 +474,40 @@ namespace VLC
             FullWindowButton = GetTemplateChild("FullWindowButton") as FrameworkElement;
             CompactOverlayModeButton = GetTemplateChild("CompactOverlayModeButton") as FrameworkElement;
             StopButton = GetTemplateChild("StopButton") as FrameworkElement;
-            DeinterlaceModeButton = GetTemplateChild("DeinterlaceModeButton") as FrameworkElement;
+            RepeatButton = GetTemplateChild("RepeatButton") as ToggleButton;
+            var deinterlaceModeButton = GetTemplateChild("DeinterlaceModeButton") as Button;
+            DeinterlaceModeButton = deinterlaceModeButton;
 
             TimeElapsedTextBlock = GetTemplateChild("TimeElapsedElement") as TextBlock;
             TimeRemainingTextBlock = GetTemplateChild("TimeRemainingElement") as TextBlock;
 
-            var deinterlaceModeMenu = GetTemplateChild("DeinterlaceModeMenu") as MenuFlyout;
-            DeinterlaceModeMenu = deinterlaceModeMenu;
-            if (deinterlaceModeMenu != null)
+            if (deinterlaceModeButton != null)
             {
-                var deinterlaceModeType = typeof(DeinterlaceMode);
-                ToggleMenuFlyoutItem menuItem;
-                string deinterlaceModeName;
-
-                foreach (var deinterlaceMode in AvailableDeinterlaceModes)
+                var deinterlaceModeMenu = new MenuFlyout();
+                deinterlaceModeButton.Flyout = deinterlaceModeMenu;
+                DeinterlaceModeMenu = deinterlaceModeMenu;
+                if (deinterlaceModeMenu != null)
                 {
-                    deinterlaceModeName = Enum.GetName(deinterlaceModeType, deinterlaceMode);
-                    menuItem = new ToggleMenuFlyoutItem()
+                    var deinterlaceModeType = typeof(DeinterlaceMode);
+                    ToggleMenuFlyoutItem menuItem;
+                    string deinterlaceModeName;
+
+                    foreach (var deinterlaceMode in AvailableDeinterlaceModes)
                     {
-                        Text = ResourceLoader?.GetString($"{deinterlaceModeType.Name}_{deinterlaceModeName}") ?? deinterlaceModeName,
-                        Tag = deinterlaceMode
-                    };
-                    menuItem.Click += DeinterlaceModeMenuItem_Click;
-                    deinterlaceModeMenu.Items.Add(menuItem);
+                        deinterlaceModeName = Enum.GetName(deinterlaceModeType, deinterlaceMode);
+                        menuItem = new ToggleMenuFlyoutItem()
+                        {
+                            Text = ResourceLoader?.GetString($"{deinterlaceModeType.Name}_{deinterlaceModeName}") ?? deinterlaceModeName,
+                            Tag = deinterlaceMode
+                        };
+                        menuItem.Click += DeinterlaceModeMenuItem_Click;
+                        deinterlaceModeMenu.Items.Add(menuItem);
+                    }
                 }
             }
 
-            AddTracksMenu("AudioTracksSelectionMenu", TrackType.Audio, "AudioSelectionAvailable", "AudioSelectionUnavailable");
-            AddTracksMenu("CCSelectionSelectionMenu", TrackType.Subtitle, "CCSelectionAvailable", "CCSelectionUnavailable", true);
+            AddTracksMenu("AudioTracksSelectionButton", TrackType.Audio, "AudioSelectionAvailable", "AudioSelectionUnavailable");
+            AddTracksMenu("CCSelectionButton", TrackType.Subtitle, "CCSelectionAvailable", "CCSelectionUnavailable", true);
 
             SetButtonClick(PlayPauseButtonOnLeft, PlayPauseButton_Click);
             SetButtonClick(PlayPauseButton, PlayPauseButton_Click);
@@ -499,6 +525,7 @@ namespace VLC
             SetToolTip("CCSelectionButton", "ShowClosedCaptionMenu");
             SetToolTip("AudioTracksSelectionButton", "ShowAudioSelectionMenu");
             SetToolTip(StopButton, "Stop");
+            SetToolTip(RepeatButton, "Repeat");
             SetToolTip(PlayPauseButton, "Play");
             SetToolTip(PlayPauseButtonOnLeft, "Play");
 
@@ -509,6 +536,7 @@ namespace VLC
             UpdateFullWindowButton();
             UpdateCompactOverlayModeButton();
             UpdateStopButton();
+            UpdateRepeatButton();
             UpdateMuteState();
             UpdateDeinterlaceModeButton();
             UpdateDeinterlaceMode();
@@ -559,10 +587,12 @@ namespace VLC
             AddTrack(tracksMenu, null, ResourceLoader?.GetString("None"));
         }
 
-        private void AddTracksMenu(string trackMenuName, TrackType trackType, string availableStateName, string unavailableStateName, bool addNoneItem = false)
+        private void AddTracksMenu(string trackButtonName, TrackType trackType, string availableStateName, string unavailableStateName, bool addNoneItem = false)
         {
-            if (GetTemplateChild(trackMenuName) is MenuFlyout menu)
+            if (GetTemplateChild(trackButtonName) is Button button)
             {
+                var menu = new MenuFlyout();
+                button.Flyout = menu;
                 var tracksMenu = new TracksMenu()
                 {
                     MenuFlyout = menu,
@@ -767,6 +797,11 @@ namespace VLC
         private void UpdateStopButton()
         {
             UpdateControl(StopButton, IsStopButtonVisible, IsStopEnabled);
+        }
+
+        private void UpdateRepeatButton()
+        {
+            UpdateControl(RepeatButton, IsRepeatButtonVisible, IsRepeatEnabled);
         }
 
         private void UpdateControl(FrameworkElement control, bool visible, bool enabled = true)

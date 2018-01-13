@@ -17,7 +17,7 @@ namespace VLC
         /// <returns>Descendant control or null if not found.</returns>
         public static FrameworkElement FindDescendantByName(this FrameworkElement element, string name)
         {
-            if (element == null || String.IsNullOrWhiteSpace(name))
+            if (element == null || string.IsNullOrWhiteSpace(name))
             {
                 return null;
             }

@@ -14,7 +14,7 @@
         <vlc:MediaElement AreTransportControlsEnabled="True" HardwareAcceleration="True"
                           MediaSource="{x:Bind Vm.MediaSource, Mode=OneWay}">
             <vlc:MediaElement.TransportControls>
-                <vlc:MediaTransportControls ControlPanelOpacity="0.8">
+                <vlc:MediaTransportControls>
                     <CommandBar>
                         <AppBarButton Icon="OpenFile" Label="Open file" Command="{x:Bind Vm.OpenFileCommand}" />
                         <AppBarButton Icon="ClosedCaption" Label="Open subtitle file" Command="{x:Bind Vm.OpenSubtitleFileCommand}" />

@@ -180,6 +180,9 @@
   <data name="PlayInMiniView" xml:space="preserve">
     <value>Lire en vue miniature</value>
   </data>
+  <data name="Repeat" xml:space="preserve">
+    <value>Répéter</value>
+  </data>
   <data name="ShowAudioSelectionMenu" xml:space="preserve">
     <value>Afficher le menu de sélection audio</value>
   </data>
