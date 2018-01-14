@@ -517,6 +517,11 @@ namespace VLC
             SetButtonClick(StopButton, StopButton_Click);
             var audioMuteButton = GetTemplateChild("AudioMuteButton");
             SetButtonClick(audioMuteButton, AudioMuteButton_Click);
+            if (RepeatButton != null)
+            {
+                RepeatButton.Checked += RepeatButton_CheckedChanged;
+                RepeatButton.Unchecked += RepeatButton_CheckedChanged;
+            }
 
             SetToolTip(DeinterlaceModeButton, "DeinterlaceFilter");
             SetToolTip(ZoomButton, "AspectRatio");
@@ -525,7 +530,6 @@ namespace VLC
             SetToolTip("CCSelectionButton", "ShowClosedCaptionMenu");
             SetToolTip("AudioTracksSelectionButton", "ShowAudioSelectionMenu");
             SetToolTip(StopButton, "Stop");
-            SetToolTip(RepeatButton, "Repeat");
             SetToolTip(PlayPauseButton, "Play");
             SetToolTip(PlayPauseButtonOnLeft, "Play");
 
@@ -546,15 +550,21 @@ namespace VLC
                 UpdateWindowState();
             };
             UpdateWindowState();
+            UpdateRepeatButtonState();
 
             Timer.Tick += Timer_Tick;
         }
 
-        private void SetToolTip(DependencyObject element, string resource)
+        private void SetToolTip(DependencyObject element, string resource, params string[] args)
         {
             if (element != null)
             {
-                ToolTipService.SetToolTip(element, ResourceLoader?.GetString(resource));
+                var resourceLoader = ResourceLoader;
+                if (resourceLoader != null)
+                {
+                    ToolTipService.SetToolTip(element, string.Format(resourceLoader.GetString(resource),
+                        args.Select(arg => resourceLoader.GetString(arg)).Cast<object>().ToArray()));
+                }
             }
         }
 
@@ -610,7 +620,7 @@ namespace VLC
 
         private void SetButtonClick(DependencyObject dependencyObject, RoutedEventHandler eventHandler)
         {
-            if (dependencyObject is Button button)
+            if (dependencyObject is ButtonBase button)
             {
                 button.Click += eventHandler;
             }
@@ -1096,6 +1106,13 @@ namespace VLC
             SetToolTip(CompactOverlayModeButton, ApplicationView.GetForCurrentView().ViewMode == ApplicationViewMode.CompactOverlay ? "LeaveMiniView" : "PlayInMiniView");
         }
 
+        private void UpdateRepeatButtonState()
+        {
+            var autoRepeatEnabled = AutoRepeatEnabled;
+            SetToolTip(RepeatButton, "Repeat", autoRepeatEnabled ? "One" : "None");
+            VisualStateManager.GoToState(this, autoRepeatEnabled ? "RepeatOneState" : "RepeatNoneState", true);
+        }
+
         private void FullWindowButton_Click(object sender, RoutedEventArgs e)
         {
             ToggleFullscreen();
@@ -1127,6 +1144,11 @@ namespace VLC
         private void StopButton_Click(object sender, RoutedEventArgs e)
         {
             MediaElement?.Stop();
+        }
+
+        private void RepeatButton_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            UpdateRepeatButtonState();
         }
 
         private void ToggleFullscreen()

@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="All" xml:space="preserve">
+    <value>Tous</value>
+  </data>
   <data name="AspectRatio" xml:space="preserve">
     <value>Proportions</value>
   </data>
@@ -171,6 +174,9 @@
   <data name="None" xml:space="preserve">
     <value>Aucun</value>
   </data>
+  <data name="One" xml:space="preserve">
+    <value>Un</value>
+  </data>
   <data name="Pause" xml:space="preserve">
     <value>Suspendre</value>
   </data>
@@ -181,7 +187,7 @@
     <value>Lire en vue miniature</value>
   </data>
   <data name="Repeat" xml:space="preserve">
-    <value>Répéter</value>
+    <value>Répéter {0}</value>
   </data>
   <data name="ShowAudioSelectionMenu" xml:space="preserve">
     <value>Afficher le menu de sélection audio</value>

@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="All" xml:space="preserve">
+    <value>All</value>
+  </data>
   <data name="AspectRatio" xml:space="preserve">
     <value>Aspect Ratio</value>
   </data>
@@ -171,6 +174,9 @@
   <data name="None" xml:space="preserve">
     <value>None</value>
   </data>
+  <data name="One" xml:space="preserve">
+    <value>One</value>
+  </data>
   <data name="Pause" xml:space="preserve">
     <value>Pause</value>
   </data>
@@ -181,7 +187,7 @@
     <value>Play in mini view</value>
   </data>
   <data name="Repeat" xml:space="preserve">
-    <value>Repeat</value>
+    <value>Repeat {0}</value>
   </data>
   <data name="ShowAudioSelectionMenu" xml:space="preserve">
     <value>Show audio selection menu</value>
