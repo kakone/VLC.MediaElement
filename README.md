@@ -50,7 +50,6 @@ On VLC.MediaTransportControls :
 - AutoHide : indicates whether the media transport controls must be hidden automatically or not.
 - AvailableDeinterlaceModes : the deinterlace modes to show in the deinterlace menu.
 - Content : you can add some content over the video.
-- ControlPanelOpacity : it's more beautiful when the control panel is not opaque :)
 - CursorAutoHide : indicates whether the mouse cursor must be hidden automatically or not.
 - IsDeinterlaceModeButtonEnabled : indicates whether the user can choose a deinterlace mode.
 - IsDeinterlaceModeButtonVisible : indicates whether the deinterlace mode button must be shown or not.
