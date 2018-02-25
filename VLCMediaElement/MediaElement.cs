@@ -147,7 +147,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="IsMuted"/> dependency property.
         /// </summary>
-        public static DependencyProperty IsMutedProperty { get; } = DependencyProperty.Register("IsMuted", typeof(bool), typeof(MediaElement),
+        public static DependencyProperty IsMutedProperty { get; } = DependencyProperty.Register(nameof(IsMuted), typeof(bool), typeof(MediaElement),
             new PropertyMetadata(false, (d, e) => ((MediaElement)d).OnIsMutedChanged()));
         /// <summary>
         /// Gets or sets a value indicating whether the audio is muted.
@@ -161,7 +161,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="Position"/> dependency property.
         /// </summary>
-        public static DependencyProperty PositionProperty { get; } = DependencyProperty.Register("Position", typeof(TimeSpan), typeof(MediaElement),
+        public static DependencyProperty PositionProperty { get; } = DependencyProperty.Register(nameof(Position), typeof(TimeSpan), typeof(MediaElement),
             new PropertyMetadata(TimeSpan.Zero, (d, e) => ((MediaElement)d).OnPositionChanged()));
         /// <summary>
         /// Gets or sets the current position of progress through the media's playback time.
@@ -175,7 +175,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="Volume"/> dependency property.
         /// </summary>
-        public static DependencyProperty VolumeProperty { get; } = DependencyProperty.Register("Volume", typeof(int), typeof(MediaElement),
+        public static DependencyProperty VolumeProperty { get; } = DependencyProperty.Register(nameof(Volume), typeof(int), typeof(MediaElement),
             new PropertyMetadata(100, (d, e) => ((MediaElement)d).OnVolumeChanged()));
         /// <summary>
         /// Gets or sets the media's volume.
@@ -189,7 +189,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="CurrentState"/> dependency property.
         /// </summary>
-        public static DependencyProperty CurrentStateProperty { get; } = DependencyProperty.Register("CurrentState", typeof(MediaElementState), typeof(MediaElement),
+        public static DependencyProperty CurrentStateProperty { get; } = DependencyProperty.Register(nameof(CurrentState), typeof(MediaElementState), typeof(MediaElement),
             new PropertyMetadata(MediaElementState.Closed, (d, e) => ((MediaElement)d).OnCurrentStateChanged()));
         /// <summary>
         /// Gets the current state.
@@ -203,7 +203,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="TransportControls"/> dependency property.
         /// </summary>
-        public static DependencyProperty TransportControlsProperty { get; } = DependencyProperty.Register("TransportControls", typeof(MediaTransportControls), typeof(MediaElement),
+        public static DependencyProperty TransportControlsProperty { get; } = DependencyProperty.Register(nameof(TransportControls), typeof(MediaTransportControls), typeof(MediaElement),
             new PropertyMetadata(null, OnTransportControlsPropertyChanged));
         /// <summary>
         /// Gets or sets the transport controls for the media.
@@ -217,7 +217,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="AreTransportControlsEnabled"/> dependency property.
         /// </summary>
-        public static DependencyProperty AreTransportControlsEnabledProperty { get; } = DependencyProperty.Register("AreTransportControlsEnabled", typeof(bool), typeof(MediaElement),
+        public static DependencyProperty AreTransportControlsEnabledProperty { get; } = DependencyProperty.Register(nameof(AreTransportControlsEnabled), typeof(bool), typeof(MediaElement),
             new PropertyMetadata(false, (d, e) => UpdateMediaTransportControls(d)));
         /// <summary>
         /// Gets or sets a value that determines whether the standard transport controls are enabled.
@@ -231,7 +231,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="Zoom"/> dependency property.
         /// </summary>
-        public static DependencyProperty ZoomProperty { get; } = DependencyProperty.Register("Zoom", typeof(bool), typeof(MediaElement),
+        public static DependencyProperty ZoomProperty { get; } = DependencyProperty.Register(nameof(Zoom), typeof(bool), typeof(MediaElement),
             new PropertyMetadata(false, async (d, e) => await ((MediaElement)d).OnZoomChangedAsync()));
         /// <summary>
         /// Gets or sets a value indicating whether the video is zoomed.
@@ -245,7 +245,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="DeinterlaceMode"/> dependency property.
         /// </summary>
-        public static DependencyProperty DeinterlaceModeProperty { get; } = DependencyProperty.Register("DeinterlaceMode", typeof(DeinterlaceMode), typeof(MediaElement),
+        public static DependencyProperty DeinterlaceModeProperty { get; } = DependencyProperty.Register(nameof(DeinterlaceMode), typeof(DeinterlaceMode), typeof(MediaElement),
             new PropertyMetadata(DeinterlaceMode.Disabled, (d, e) => ((MediaElement)d).OnDeinterlaceModeChanged()));
         /// <summary>
         /// Gets or sets the deinterlace mode.
@@ -259,7 +259,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="HardwareAcceleration"/> dependency property.
         /// </summary>
-        public static DependencyProperty HardwareAccelerationProperty { get; } = DependencyProperty.Register("HardwareAcceleration", typeof(bool), typeof(MediaElement),
+        public static DependencyProperty HardwareAccelerationProperty { get; } = DependencyProperty.Register(nameof(HardwareAcceleration), typeof(bool), typeof(MediaElement),
             new PropertyMetadata(true, (d, e) => ((MediaElement)d).TransportControls?.UpdateDeinterlaceModeButton()));
         /// <summary>
         /// Gets or sets a value indicating whether the hardware acceleration must be used.
@@ -273,7 +273,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="Source"/> dependency property.
         /// </summary>
-        public static DependencyProperty SourceProperty { get; } = DependencyProperty.Register("Source", typeof(string), typeof(MediaElement),
+        public static DependencyProperty SourceProperty { get; } = DependencyProperty.Register(nameof(Source), typeof(string), typeof(MediaElement),
             new PropertyMetadata(null, (d, e) => ((MediaElement)d).MediaSource = e.NewValue == null ? null : VLC.MediaSource.CreateFromUri((string)e.NewValue)));
         /// <summary>
         /// Gets or sets a media source on the MediaElement.
@@ -287,7 +287,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="MediaSource"/> dependency property.
         /// </summary>
-        public static DependencyProperty MediaSourceProperty { get; } = DependencyProperty.Register("MediaSource", typeof(IMediaSource), typeof(MediaElement),
+        public static DependencyProperty MediaSourceProperty { get; } = DependencyProperty.Register(nameof(MediaSource), typeof(IMediaSource), typeof(MediaElement),
             new PropertyMetadata(null, async (d, e) => await ((MediaElement)d).OnMediaSourceChangedAsync(e.OldValue as IMediaSource, e.NewValue as IMediaSource)));
         /// <summary>
         /// Gets or sets a media source on the MediaElement.
@@ -301,7 +301,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="AutoPlay"/> dependency property.
         /// </summary>
-        public static DependencyProperty AutoPlayProperty { get; } = DependencyProperty.Register("AutoPlay", typeof(bool), typeof(MediaElement),
+        public static DependencyProperty AutoPlayProperty { get; } = DependencyProperty.Register(nameof(AutoPlay), typeof(bool), typeof(MediaElement),
             new PropertyMetadata(true));
         /// <summary>
         /// Gets or sets a value indicating whether media will begin playback automatically when the <see cref="Source"/> property is set.
@@ -315,7 +315,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="PosterSource"/> dependency property.
         /// </summary>
-        public static DependencyProperty PosterSourceProperty { get; } = DependencyProperty.Register("PosterSource", typeof(ImageSource), typeof(MediaElement),
+        public static DependencyProperty PosterSourceProperty { get; } = DependencyProperty.Register(nameof(PosterSource), typeof(ImageSource), typeof(MediaElement),
             new PropertyMetadata(null));
         /// <summary>
         /// Gets or sets the image source that is used for a placeholder image during MediaElement loading transition states.
@@ -329,7 +329,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="Stretch"/> dependency property.
         /// </summary>
-        public static DependencyProperty StretchProperty { get; } = DependencyProperty.Register("Stretch", typeof(Stretch), typeof(MediaElement),
+        public static DependencyProperty StretchProperty { get; } = DependencyProperty.Register(nameof(Stretch), typeof(Stretch), typeof(MediaElement),
             new PropertyMetadata(Stretch.Uniform));
         /// <summary>
         /// Gets or sets a value that describes how an MediaElement should be stretched to fill the destination rectangle.
@@ -343,7 +343,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="Options"/> dependency property.
         /// </summary>
-        public static DependencyProperty OptionsProperty { get; } = DependencyProperty.Register("Options", typeof(IDictionary<string, object>), typeof(MediaElement),
+        public static DependencyProperty OptionsProperty { get; } = DependencyProperty.Register(nameof(Options), typeof(IDictionary<string, object>), typeof(MediaElement),
             new PropertyMetadata(new Dictionary<string, object>()));
         /// <summary>
         /// Gets or sets the options for the media

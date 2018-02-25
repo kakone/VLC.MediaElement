@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
+using Windows.System.Profile;
+using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -19,9 +21,10 @@ namespace SampleApp
         /// </summary>
         public App()
         {
-            this.InitializeComponent();
-            this.Suspending += OnSuspending;
-            this.UnhandledException += App_UnhandledException;
+            InitializeComponent();
+            RequiresPointerMode = ApplicationRequiresPointerMode.WhenRequested;
+            Suspending += OnSuspending;
+            UnhandledException += App_UnhandledException;
         }
 
         private void App_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -43,18 +46,23 @@ namespace SampleApp
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
 #if DEBUG
-            if (System.Diagnostics.Debugger.IsAttached)
+            if (Debugger.IsAttached)
             {
-                this.DebugSettings.EnableFrameRateCounter = true;
+                DebugSettings.EnableFrameRateCounter = true;
             }
 #endif
 
-            Frame rootFrame = Window.Current.Content as Frame;
+            var rootFrame = Window.Current.Content as Frame;
 
             // Do not repeat app initialization when the Window already has content,
             // just ensure that the window is active
             if (rootFrame == null)
             {
+                if (AnalyticsInfo.VersionInfo.DeviceFamily == "Windows.Xbox")
+                {
+                    ApplicationView.GetForCurrentView().SetDesiredBoundsMode(ApplicationViewBoundsMode.UseCoreWindow);
+                }
+
                 // Create a Frame to act as the navigation context and navigate to the first page
                 rootFrame = new Frame();
 

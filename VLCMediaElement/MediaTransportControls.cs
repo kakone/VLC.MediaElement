@@ -6,6 +6,7 @@ using Windows.ApplicationModel.Resources;
 using Windows.Devices.Input;
 using Windows.Foundation;
 using Windows.Foundation.Metadata;
+using Windows.System;
 using Windows.System.Profile;
 using Windows.UI.Core;
 using Windows.UI.ViewManagement;
@@ -43,6 +44,8 @@ namespace VLC
         public MediaTransportControls()
         {
             DefaultStyleKey = typeof(MediaTransportControls);
+            Loaded += (sender, e) => IsLoaded = true;
+            Unloaded += (sender, e) => IsLoaded = false;
         }
 
         private bool HasError { get; set; }
@@ -51,6 +54,7 @@ namespace VLC
         private Point? PreviousPointerPosition { get; set; }
         private CoreCursor Cursor { get; set; }
         private DispatcherTimer Timer { get; set; } = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(3) };
+        private DispatcherTimer ProgressSliderTimer { get; } = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(1) };
         private IDictionary<TrackType, TracksMenu> TracksMenus { get; } = new Dictionary<TrackType, TracksMenu>();
 
         private FrameworkElement LeftSeparator { get; set; }
@@ -72,6 +76,25 @@ namespace VLC
         private TextBlock TimeRemainingTextBlock { get; set; }
         private MenuFlyout DeinterlaceModeMenu { get; set; }
 
+        private bool Xbox => AnalyticsInfo.VersionInfo.DeviceFamily == "Windows.Xbox";
+
+        private bool _isLoaded;
+        private bool IsLoaded
+        {
+            get => _isLoaded;
+            set
+            {
+                if (_isLoaded != value)
+                {
+                    _isLoaded = value;
+                    if (AutoHide)
+                    {
+                        SubscribeKeyDownEvent(value);
+                    }
+                }
+            }
+        }
+
         private ResourceLoader ResourceLoader
         {
             get
@@ -92,7 +115,7 @@ namespace VLC
             get => (ProgressSlider?.Value) ?? 0;
             set
             {
-                if (ProgressSlider != null && ProgressSlider.Value != value)
+                if (ProgressSlider != null && ProgressSlider.Value != value && !ProgressSliderTimer.IsEnabled)
                 {
                     ProgressSlider.ValueChanged -= ProgressSlider_ValueChanged;
                     try
@@ -140,7 +163,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="AutoHide"/> dependency property.
         /// </summary>
-        public static DependencyProperty AutoHideProperty { get; } = DependencyProperty.Register("AutoHide", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty AutoHideProperty { get; } = DependencyProperty.Register(nameof(AutoHide), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).OnAutoHidePropertyChanged()));
         /// <summary>
         /// Gets or sets a value indicating whether the media transport controls must be hidden automatically or not.
@@ -154,7 +177,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="CursorAutoHide"/> dependency property.
         /// </summary>
-        public static DependencyProperty CursorAutoHideProperty { get; } = DependencyProperty.Register("CursorAutoHide", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty CursorAutoHideProperty { get; } = DependencyProperty.Register(nameof(CursorAutoHide), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(false));
         /// <summary>
         /// Gets or sets a value indicating whether the mouse cursor must be hidden automatically or not.
@@ -168,7 +191,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="IsDeinterlaceModeButtonVisible"/> dependency property.
         /// </summary>
-        public static DependencyProperty IsDeinterlaceModeButtonVisibleProperty { get; } = DependencyProperty.Register("IsDeinterlaceModeButtonVisible", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty IsDeinterlaceModeButtonVisibleProperty { get; } = DependencyProperty.Register(nameof(IsDeinterlaceModeButtonVisible), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(false, (d, e) => ((MediaTransportControls)d).UpdateDeinterlaceModeButton()));
         /// <summary>
         /// Gets or sets a value indicating whether the deinterlace mode button is shown.
@@ -182,7 +205,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="IsDeinterlaceModeButtonEnabled"/> dependency property
         /// </summary>
-        public static DependencyProperty IsDeinterlaceModeButtonEnabledProperty { get; } = DependencyProperty.Register("IsDeinterlaceModeButtonEnabled", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty IsDeinterlaceModeButtonEnabledProperty { get; } = DependencyProperty.Register(nameof(IsDeinterlaceModeButtonEnabled), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdateDeinterlaceModeButton()));
         /// <summary>
         /// Gets or sets a value indicating whether a user can choose a deinterlace mode.
@@ -196,7 +219,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="IsPlayPauseButtonVisible"/> dependency property.
         /// </summary>
-        public static DependencyProperty IsPlayPauseButtonVisibleProperty { get; } = DependencyProperty.Register("IsPlayPauseButtonVisible", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty IsPlayPauseButtonVisibleProperty { get; } = DependencyProperty.Register(nameof(IsPlayPauseButtonVisible), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdatePlayPauseButton()));
         /// <summary>
         /// Gets or sets a value indicating whether the play/pause button is shown.
@@ -210,7 +233,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="IsPlayPauseEnabled"/> dependency property
         /// </summary>
-        public static DependencyProperty IsPlayPauseEnabledProperty { get; } = DependencyProperty.Register("IsPlayPauseEnabled", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty IsPlayPauseEnabledProperty { get; } = DependencyProperty.Register(nameof(IsPlayPauseEnabled), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdatePlayPauseButton()));
         /// <summary>
         /// Gets or sets a value indicating whether a user can play/pause the media.
@@ -224,7 +247,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="IsZoomButtonVisible"/> dependency property.
         /// </summary>
-        public static DependencyProperty IsZoomButtonVisibleProperty { get; } = DependencyProperty.Register("IsZoomButtonVisible", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty IsZoomButtonVisibleProperty { get; } = DependencyProperty.Register(nameof(IsZoomButtonVisible), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdateZoomButton()));
         /// <summary>
         /// Gets or sets a value indicating whether the zoom button is shown.
@@ -238,7 +261,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="IsZoomEnabled"/> dependency property.
         /// </summary>
-        public static DependencyProperty IsZoomEnabledProperty { get; } = DependencyProperty.Register("IsZoomEnabled", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty IsZoomEnabledProperty { get; } = DependencyProperty.Register(nameof(IsZoomEnabled), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdateZoomButton()));
         /// <summary>
         /// Gets or sets a value indicating whether a user can zoom the media.
@@ -252,7 +275,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="IsFullWindowButtonVisible"/> dependency property.
         /// </summary>
-        public static DependencyProperty IsFullWindowButtonVisibleProperty { get; } = DependencyProperty.Register("IsFullWindowButtonVisible", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty IsFullWindowButtonVisibleProperty { get; } = DependencyProperty.Register(nameof(IsFullWindowButtonVisible), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdateFullWindowButton()));
         /// <summary>
         /// Gets or sets a value indicating whether the full screen button is shown.
@@ -266,7 +289,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="IsFullWindowEnabled"/> dependency property.
         /// </summary>
-        public static DependencyProperty IsFullWindowEnabledProperty { get; } = DependencyProperty.Register("IsFullWindowEnabled", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty IsFullWindowEnabledProperty { get; } = DependencyProperty.Register(nameof(IsFullWindowEnabled), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdateFullWindowButton()));
         /// <summary>
         /// Gets or sets a value indicating whether a user can play the media in full-screen mode.
@@ -281,28 +304,28 @@ namespace VLC
             ApiInformation.IsApiContractPresent("Windows.Foundation.UniversalApiContract", 4) &&
             ApplicationView.GetForCurrentView().IsViewModeSupported(ApplicationViewMode.CompactOverlay);
         /// <summary>
-        /// Identifies the <see cref="IsCompactOverlayModeButtonVisible"/> dependency property.
+        /// Identifies the <see cref="IsCompactOverlayButtonVisible"/> dependency property.
         /// </summary>
-        public static DependencyProperty IsCompactOverlayModeButtonVisibleProperty { get; } = DependencyProperty.Register("IsCompactOverlayModeButtonVisible", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty IsCompactOverlayButtonVisibleProperty { get; } = DependencyProperty.Register(nameof(IsCompactOverlayButtonVisible), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(IsCompactOverlayViewModeSupported, (d, e) => ((MediaTransportControls)d).UpdateCompactOverlayModeButton()));
         /// <summary>
-        /// Gets or sets a value indicating whether the full screen button is shown.
+        /// Gets or sets a value that indicates whether the compact overlay button is shown.
         /// </summary>
-        public bool IsCompactOverlayModeButtonVisible
+        public bool IsCompactOverlayButtonVisible
         {
-            get => (bool)GetValue(IsCompactOverlayModeButtonVisibleProperty);
-            set => SetValue(IsCompactOverlayModeButtonVisibleProperty, value && IsCompactOverlayViewModeSupported);
+            get => (bool)GetValue(IsCompactOverlayButtonVisibleProperty);
+            set => SetValue(IsCompactOverlayButtonVisibleProperty, value && IsCompactOverlayViewModeSupported);
         }
 
         /// <summary>
-        /// Identifies the <see cref="IsCompactOverlayModeButtonEnabled"/> dependency property.
+        /// Identifies the <see cref="IsCompactOverlayEnabled"/> dependency property.
         /// </summary>
-        public static DependencyProperty IsCompactOverlayModeButtonEnabledProperty { get; } = DependencyProperty.Register("IsCompactOverlayModeButtonEnabled", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty IsCompactOverlayModeButtonEnabledProperty { get; } = DependencyProperty.Register(nameof(IsCompactOverlayEnabled), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdateCompactOverlayModeButton()));
         /// <summary>
-        /// Gets or sets a value indicating whether a user can play the media in full-screen mode.
+        /// Gets or sets a value that indicates whether a user can enter compact overlay mode.
         /// </summary>
-        public bool IsCompactOverlayModeButtonEnabled
+        public bool IsCompactOverlayEnabled
         {
             get => (bool)GetValue(IsCompactOverlayModeButtonEnabledProperty);
             set => SetValue(IsCompactOverlayModeButtonEnabledProperty, value);
@@ -311,7 +334,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="IsStopButtonVisible"/> dependency property.
         /// </summary>
-        public static DependencyProperty IsStopButtonVisibleProperty { get; } = DependencyProperty.Register("IsStopButtonVisible", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty IsStopButtonVisibleProperty { get; } = DependencyProperty.Register(nameof(IsStopButtonVisible), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(false, (d, e) => ((MediaTransportControls)d).UpdateStopButton()));
         /// <summary>
         /// Gets or sets a value indicating whether the stop button is shown.
@@ -325,7 +348,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="IsStopEnabled"/> dependency property.
         /// </summary>
-        public static DependencyProperty IsStopEnabledProperty { get; } = DependencyProperty.Register("IsStopEnabled", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty IsStopEnabledProperty { get; } = DependencyProperty.Register(nameof(IsStopEnabled), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdateStopButton()));
         /// <summary>
         /// Gets or sets a value indicating whether a user can stop the media playback.
@@ -339,7 +362,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="IsRepeatButtonVisible"/> dependency property.
         /// </summary>
-        public static DependencyProperty IsRepeatButtonVisibleProperty { get; } = DependencyProperty.Register("IsRepeatButtonVisible", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty IsRepeatButtonVisibleProperty { get; } = DependencyProperty.Register(nameof(IsRepeatButtonVisible), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(false, (d, e) => ((MediaTransportControls)d).UpdateRepeatButton()));
         /// <summary>
         ///Gets or sets a value that indicates whether the repeat button is shown.
@@ -353,7 +376,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="IsRepeatEnabled"/> dependency property.
         /// </summary>
-        public static DependencyProperty IsRepeatEnabledProperty { get; } = DependencyProperty.Register("IsRepeatEnabled", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty IsRepeatEnabledProperty { get; } = DependencyProperty.Register(nameof(IsRepeatEnabled), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdateRepeatButton()));
         /// <summary>
         /// Gets or sets a value that indicates whether a user repeat the playback of the media.
@@ -367,7 +390,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="Content"/> dependency property.
         /// </summary>
-        public static DependencyProperty ContentProperty { get; } = DependencyProperty.Register("Content", typeof(object), typeof(MediaTransportControls),
+        public static DependencyProperty ContentProperty { get; } = DependencyProperty.Register(nameof(Content), typeof(object), typeof(MediaTransportControls),
             new PropertyMetadata(null));
         /// <summary>
         /// Gets or sets the content to show over the media element.
@@ -381,7 +404,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="IsCompact"/> dependency property.
         /// </summary>
-        public static DependencyProperty IsCompactProperty { get; } = DependencyProperty.Register("IsCompact", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty IsCompactProperty { get; } = DependencyProperty.Register(nameof(IsCompact), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(false, (d, e) => ((MediaTransportControls)d).UpdateMediaTransportControlMode()));
         /// <summary>
         /// Gets or sets a value indicating whether transport controls are shown on one row instead of two.
@@ -395,7 +418,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="IsSeekBarVisible"/> dependency property.
         /// </summary>
-        public static DependencyProperty IsSeekBarVisibleProperty { get; } = DependencyProperty.Register("IsSeekBarVisible", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty IsSeekBarVisibleProperty { get; } = DependencyProperty.Register(nameof(IsSeekBarVisible), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdateSeekBarVisibility()));
         /// <summary>
         /// Gets or sets a value indicating whether the seek bar is shown.
@@ -409,7 +432,7 @@ namespace VLC
         /// <summary>
         /// Identifies the <see cref="IsSeekBarEnabled"/> dependency property.
         /// </summary>
-        public static DependencyProperty IsSeekBarEnabledProperty { get; } = DependencyProperty.Register("IsSeekBarEnabled", typeof(bool), typeof(MediaTransportControls),
+        public static DependencyProperty IsSeekBarEnabledProperty { get; } = DependencyProperty.Register(nameof(IsSeekBarEnabled), typeof(bool), typeof(MediaTransportControls),
             new PropertyMetadata(true, (d, e) => ((MediaTransportControls)d).UpdatePlayPauseButton()));
         /// <summary>
         /// Gets or sets a value indicating whether a user can use the seek bar to find a location in the media.
@@ -458,7 +481,7 @@ namespace VLC
             if (ProgressSlider != null)
             {
                 ProgressSlider.Minimum = 0;
-                ProgressSlider.Maximum = 1000;
+                ProgressSlider.Maximum = (Xbox ? 100 : 1000);
                 ProgressSlider.ValueChanged += ProgressSlider_ValueChanged;
             }
             TimeTextGrid = GetTemplateChild("TimeTextGrid") as FrameworkElement;
@@ -553,6 +576,7 @@ namespace VLC
             UpdateRepeatButtonState();
 
             Timer.Tick += Timer_Tick;
+            ProgressSliderTimer.Tick += ProgressSliderTimer_Tick;
         }
 
         private void SetToolTip(DependencyObject element, string resource, params string[] args)
@@ -630,11 +654,64 @@ namespace VLC
         {
             if (AutoHide)
             {
+                SubscribeKeyDownEvent(true);
                 StartTimer();
             }
             else
             {
+                SubscribeKeyDownEvent(false);
                 Show();
+            }
+        }
+
+        private void SubscribeKeyDownEvent(bool subscribe)
+        {
+            if (Xbox && IsLoaded)
+            {
+                var coreWindow = CoreWindow.GetForCurrentThread();
+                if (subscribe)
+                {
+                    coreWindow.KeyDown += MediaTransportControls_KeyDown;
+                }
+                else
+                {
+                    coreWindow.KeyDown -= MediaTransportControls_KeyDown;
+                }
+            }
+        }
+
+        private void MediaTransportControls_KeyDown(CoreWindow sender, KeyEventArgs args)
+        {
+            switch (args.VirtualKey)
+            {
+                case VirtualKey.Select:
+                case VirtualKey.Back:
+                case VirtualKey.GamepadA:
+                case VirtualKey.GamepadB:
+                case VirtualKey.GamepadX:
+                case VirtualKey.GamepadY:
+                case VirtualKey.GamepadRightShoulder:
+                case VirtualKey.GamepadLeftShoulder:
+                case VirtualKey.GamepadLeftTrigger:
+                case VirtualKey.GamepadRightTrigger:
+                case VirtualKey.GamepadDPadUp:
+                case VirtualKey.GamepadDPadDown:
+                case VirtualKey.GamepadDPadLeft:
+                case VirtualKey.GamepadDPadRight:
+                case VirtualKey.GamepadMenu:
+                case VirtualKey.GamepadView:
+                case VirtualKey.GamepadLeftThumbstickButton:
+                case VirtualKey.GamepadRightThumbstickButton:
+                case VirtualKey.GamepadLeftThumbstickUp:
+                case VirtualKey.GamepadLeftThumbstickDown:
+                case VirtualKey.GamepadLeftThumbstickRight:
+                case VirtualKey.GamepadLeftThumbstickLeft:
+                case VirtualKey.GamepadRightThumbstickUp:
+                case VirtualKey.GamepadRightThumbstickDown:
+                case VirtualKey.GamepadRightThumbstickRight:
+                case VirtualKey.GamepadRightThumbstickLeft:
+                    OnPointerMoved(sender, null);
+                    break;
             }
         }
 
@@ -691,7 +768,7 @@ namespace VLC
         private void OnPointerMoved(object sender, RoutedEventArgs e)
         {
             Show();
-            if (e.OriginalSource == sender || e.OriginalSource == ControlPanelGrid)
+            if (e == null || e.OriginalSource == sender || e.OriginalSource == ControlPanelGrid)
             {
                 StartTimer();
             }
@@ -796,12 +873,12 @@ namespace VLC
 
         private void UpdateFullWindowButton()
         {
-            UpdateControl(FullWindowButton, IsFullWindowButtonVisible && AnalyticsInfo.VersionInfo.DeviceFamily != "Xbox", IsFullWindowEnabled);
+            UpdateControl(FullWindowButton, IsFullWindowButtonVisible && !Xbox, IsFullWindowEnabled);
         }
 
         private void UpdateCompactOverlayModeButton()
         {
-            UpdateControl(CompactOverlayModeButton, IsCompactOverlayModeButtonVisible, IsCompactOverlayModeButtonEnabled);
+            UpdateControl(CompactOverlayModeButton, IsCompactOverlayButtonVisible, IsCompactOverlayEnabled);
         }
 
         private void UpdateStopButton()
@@ -1036,12 +1113,16 @@ namespace VLC
         /// <param name="time">current position of progress</param>
         internal void OnTimeChanged(long time)
         {
-            UpdateTime();
+            if (!ProgressSliderTimer.IsEnabled)
+            {
+                UpdateTime();
+            }
         }
 
-        private void UpdateTime()
+        private void UpdateTime(bool fromSlider = false)
         {
-            var time = MediaElement.Position;
+            var time = (fromSlider ? TimeSpan.FromTicks((long)(ProgressSlider.Value * Length.Ticks / ProgressSlider.Maximum)) :
+                MediaElement.Position);
             var timeElapsed = time.ToShortString();
             var timeRemaining = (Length - time).ToShortString();
             if (TimeElapsedTextBlock?.Text != timeElapsed)
@@ -1056,7 +1137,15 @@ namespace VLC
 
         private void ProgressSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
         {
-            MediaElement.SetPosition((float)(e.NewValue / ProgressSlider.Maximum));
+            ProgressSliderTimer.Stop();
+            ProgressSliderTimer.Start();
+            UpdateTime(true);
+        }
+
+        private void ProgressSliderTimer_Tick(object sender, object e)
+        {
+            MediaElement.SetPosition((float)(ProgressSlider.Value / ProgressSlider.Maximum));
+            ProgressSliderTimer.Stop();
         }
 
         /// <summary>
