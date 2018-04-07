@@ -425,19 +425,19 @@ namespace VLC
 
         private void OnCurrentStateChanged()
         {
-            CurrentStateChanged?.Invoke(this, new RoutedEventArgs());
+            DispatcherRun(() => CurrentStateChanged?.Invoke(this, new RoutedEventArgs()));
         }
 
         private async Task OnZoomChangedAsync()
         {
-            ZoomChanged?.Invoke(this, new RoutedEventArgs());
+            DispatcherRun(() => ZoomChanged?.Invoke(this, new RoutedEventArgs()));
             await UpdateZoomAsync();
             TransportControls?.UpdateZoomButton();
         }
 
         private void OnDeinterlaceModeChanged()
         {
-            DeinterlaceModeChanged?.Invoke(this, new RoutedEventArgs());
+            DispatcherRun(() => DeinterlaceModeChanged?.Invoke(this, new RoutedEventArgs()));
             UpdateDeinterlaceMode();
         }
 
@@ -455,6 +455,14 @@ namespace VLC
         private async Task DispatcherRunAsync(DispatchedHandler agileCallback)
         {
             await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, agileCallback);
+        }
+
+        private void DispatcherRun(DispatchedHandler agileCallback)
+        {
+            if (Dispatcher.HasThreadAccess)
+                agileCallback();
+            else
+                Dispatcher.RunAsync(CoreDispatcherPriority.Normal, agileCallback).AsTask().Wait();
         }
 
         private async Task InitAsync(SwapChainPanel swapChainPanel)
@@ -475,7 +483,7 @@ namespace VLC
                     $"--keystore-file={Path.Combine(ApplicationData.Current.LocalFolder.Path, KeyStoreFilename)}"
                 }, swapChainPanel);
             Instance = instance;
-            instance.setDialogHandlers(OnErrorAsync, OnShowLoginDialogAsync, OnShowDialogAsync,
+            instance.setDialogHandlers(OnError, OnShowLoginDialogAsync, OnShowDialogAsync,
                 (dialog, title, text, intermediate, position, cancel) => { },
                 OnCancelCurrentDialogAsync,
                 (dialog, position, text) => { });
@@ -494,14 +502,14 @@ namespace VLC
         {
             Debug.WriteLine($"[VLC {level}] {message}");
             var loggingLevel = level.ToLoggingLevel();
-            Logging?.Invoke(this, new LogRoutedEventArgs() { Level = loggingLevel, Message = message });
+            DispatcherRun(() => Logging?.Invoke(this, new LogRoutedEventArgs() { Level = loggingLevel, Message = message }));
             LoggingChannel.LogMessage(message, loggingLevel);
         }
 
-        private async void OnErrorAsync(string title, string text)
+        private async void OnError(string title, string text)
         {
             await DispatcherRunAsync(() => TransportControls?.SetError($"{title}{Environment.NewLine}{text}"));
-            MediaFailed?.Invoke(this, new MediaFailedRoutedEventArgs() { ErrorTitle = title, ErrorMessage = text });
+            DispatcherRun(() => MediaFailed?.Invoke(this, new MediaFailedRoutedEventArgs() { ErrorTitle = title, ErrorMessage = text }));
             await s_logSemaphoreSlim.WaitAsync();
             try
             {
@@ -614,10 +622,10 @@ namespace VLC
             await DispatcherRunAsync(() => TransportControls?.OnTimeChanged(time));
         }
 
-        private async void OnOpeningAsync()
+        private async void OnOpening()
         {
             await UpdateStateAsync(MediaElementState.Opening);
-            MediaOpened?.Invoke(this, new RoutedEventArgs());
+            DispatcherRun(() => MediaOpened?.Invoke(this, new RoutedEventArgs()));
         }
 
         private async void OnEndReachedAsync()
@@ -819,7 +827,7 @@ namespace VLC
                 var mediaPlayer = new MediaPlayer(media);
                 var eventManager = mediaPlayer.eventManager();
                 eventManager.OnBuffering += async p => await UpdateStateAsync(MediaElementState.Buffering);
-                eventManager.OnOpening += OnOpeningAsync;
+                eventManager.OnOpening += OnOpening;
                 eventManager.OnPlaying += async () => await UpdateStateAsync(MediaElementState.Playing);
                 eventManager.OnPaused += async () => await UpdateStateAsync(MediaElementState.Paused);
                 eventManager.OnStopped += async () => await UpdateStateAsync(MediaElementState.Stopped);
