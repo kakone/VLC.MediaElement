@@ -1,7 +1,7 @@
-﻿using libVLCX;
-using Nito.AsyncEx;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using libVLCX;
+using Nito.AsyncEx;
 
 namespace VLC
 {
@@ -9,6 +9,9 @@ namespace VLC
     /// Event arguments for dialog box.
     /// </summary>
     public sealed class DialogEventArgs
+#if CLASS_LIBRARY
+        : EventArgs
+#endif
     {
         /// <summary>
         /// Initializes a new instance of the DialogEventArgs class.

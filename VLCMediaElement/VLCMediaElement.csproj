@@ -31,6 +31,7 @@
     <Compile Include="DeferrableCancelEventArgs.cs" />
     <Compile Include="DeferrableEventArgs.cs" />
     <Compile Include="DeinterlaceMode.cs" />
+    <Compile Include="DispatcherExtensions.cs" />
     <Compile Include="FrameworkElementExtensions.cs" />
     <Compile Include="IMediaSource.cs" />
     <Compile Include="Logger.cs" />

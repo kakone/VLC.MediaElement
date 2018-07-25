@@ -1,6 +1,6 @@
-﻿using Nito.AsyncEx;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using Nito.AsyncEx;
 
 namespace VLC
 {
@@ -8,6 +8,9 @@ namespace VLC
     /// Event arguments for login dialog box.
     /// </summary>
     public sealed class LoginDialogEventArgs
+#if CLASS_LIBRARY
+        : EventArgs
+#endif
     {
         /// <summary>
         /// Initializes a new instance of LoginDialogEventArgs class.

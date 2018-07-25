@@ -1,6 +1,6 @@
-﻿using Nito.AsyncEx;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using Nito.AsyncEx;
 
 namespace VLC
 {
@@ -8,6 +8,9 @@ namespace VLC
     /// Event arguments for deferrals
     /// </summary>
     public sealed class DeferrableEventArgs
+#if CLASS_LIBRARY
+        : EventArgs
+#endif
     {
         private DeferralManager Deferrals { get; } = new DeferralManager();
 

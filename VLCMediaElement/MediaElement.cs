@@ -13,7 +13,6 @@ using Windows.Foundation.Diagnostics;
 using Windows.Media.Devices;
 using Windows.Storage;
 using Windows.System.Profile;
-using Windows.UI.Core;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -452,11 +451,6 @@ namespace VLC
             TransportControls?.UpdateDeinterlaceMode();
         }
 
-        private async Task DispatcherRunAsync(DispatchedHandler agileCallback)
-        {
-            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, agileCallback);
-        }
-
         private async Task InitAsync(SwapChainPanel swapChainPanel)
         {
             LoggingChannel = Logger.AddLoggingChannel(Name);
@@ -500,8 +494,11 @@ namespace VLC
 
         private async void OnErrorAsync(string title, string text)
         {
-            await DispatcherRunAsync(() => TransportControls?.SetError($"{title}{Environment.NewLine}{text}"));
-            MediaFailed?.Invoke(this, new MediaFailedRoutedEventArgs() { ErrorTitle = title, ErrorMessage = text });
+            await Dispatcher.RunAsync(() =>
+            {
+                TransportControls?.SetError($"{title}{Environment.NewLine}{text}");
+                MediaFailed?.Invoke(this, new MediaFailedRoutedEventArgs() { ErrorTitle = title, ErrorMessage = text });
+            });
             await s_logSemaphoreSlim.WaitAsync();
             try
             {
@@ -598,31 +595,31 @@ namespace VLC
             var trackName = source?.FirstOrDefault(td => td.id() == trackId)?.name();
             if (!string.IsNullOrWhiteSpace(trackName))
             {
-                await DispatcherRunAsync(() => TransportControls?.OnTrackAdded(trackType, trackId, trackName));
+                await Dispatcher.RunAsync(() => TransportControls?.OnTrackAdded(trackType, trackId, trackName));
             }
         }
 
         private async void EventManager_OnPositionChangedAsync(float position)
         {
             await UpdateStateAsync(MediaElementState.Playing);
-            await DispatcherRunAsync(() => TransportControls?.OnPositionChanged(position));
+            await Dispatcher.RunAsync(() => TransportControls?.OnPositionChanged(position));
         }
 
         private async void EventManager_OnTimeChangedAsync(long time)
         {
             await SetPositionAsync(time);
-            await DispatcherRunAsync(() => TransportControls?.OnTimeChanged(time));
+            await Dispatcher.RunAsync(() => TransportControls?.OnTimeChanged(time));
         }
 
         private async void OnOpeningAsync()
         {
             await UpdateStateAsync(MediaElementState.Opening);
-            MediaOpened?.Invoke(this, new RoutedEventArgs());
+            await Dispatcher.RunAsync(() => MediaOpened?.Invoke(this, new RoutedEventArgs()));
         }
 
         private async void OnEndReachedAsync()
         {
-            await DispatcherRunAsync(async () =>
+            await Dispatcher.RunAsync(async () =>
             {
                 var autoRepeatEnabled = TransportControls?.AutoRepeatEnabled ?? false;
                 if (!autoRepeatEnabled)
@@ -641,7 +638,7 @@ namespace VLC
 
         private async Task UpdateStateAsync(MediaElementState state)
         {
-            await DispatcherRunAsync(() =>
+            await Dispatcher.RunAsync(() =>
             {
                 var previousState = CurrentState;
                 if (previousState != state)
@@ -825,13 +822,13 @@ namespace VLC
                 eventManager.OnStopped += async () => await UpdateStateAsync(MediaElementState.Stopped);
                 eventManager.OnEndReached += OnEndReachedAsync;
                 eventManager.OnPositionChanged += EventManager_OnPositionChangedAsync;
-                eventManager.OnVoutCountChanged += async p => await DispatcherRunAsync(async () => { await UpdateZoomAsync(); });
+                eventManager.OnVoutCountChanged += async p => await Dispatcher.RunAsync(async () => { await UpdateZoomAsync(); });
                 eventManager.OnTrackAdded += EventManager_OnTrackAddedAsync;
-                eventManager.OnTrackSelected += async (trackType, trackId) => await DispatcherRunAsync(() => TransportControls?.OnTrackSelected(trackType, trackId));
-                eventManager.OnTrackDeleted += async (trackType, trackId) => await DispatcherRunAsync(() => TransportControls?.OnTrackDeleted(trackType, trackId));
-                eventManager.OnLengthChanged += async length => await DispatcherRunAsync(() => TransportControls?.OnLengthChanged(length));
+                eventManager.OnTrackSelected += async (trackType, trackId) => await Dispatcher.RunAsync(() => TransportControls?.OnTrackSelected(trackType, trackId));
+                eventManager.OnTrackDeleted += async (trackType, trackId) => await Dispatcher.RunAsync(() => TransportControls?.OnTrackDeleted(trackType, trackId));
+                eventManager.OnLengthChanged += async length => await Dispatcher.RunAsync(() => TransportControls?.OnLengthChanged(length));
                 eventManager.OnTimeChanged += EventManager_OnTimeChangedAsync;
-                eventManager.OnSeekableChanged += async seekable => await DispatcherRunAsync(() => TransportControls?.OnSeekableChanged(seekable));
+                eventManager.OnSeekableChanged += async seekable => await Dispatcher.RunAsync(() => TransportControls?.OnSeekableChanged(seekable));
                 MediaPlayer = mediaPlayer;
 
                 SetAudioDevice();
@@ -918,7 +915,7 @@ namespace VLC
 
         private async Task SetPositionAsync(long time)
         {
-            await DispatcherRunAsync(() =>
+            await Dispatcher.RunAsync(() =>
             {
                 UpdatingPosition = true;
                 try

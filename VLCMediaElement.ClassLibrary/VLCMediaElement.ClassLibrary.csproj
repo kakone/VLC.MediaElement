@@ -37,6 +37,9 @@
     <Compile Include="..\VLCMediaElement\DialogEventArgs.cs">
       <Link>DialogEventArgs.cs</Link>
     </Compile>
+    <Compile Include="..\VLCMediaElement\DispatcherExtensions.cs">
+      <Link>DispatcherExtensions.cs</Link>
+    </Compile>
     <Compile Include="..\VLCMediaElement\FrameworkElementExtensions.cs">
       <Link>FrameworkElementExtensions.cs</Link>
     </Compile>
