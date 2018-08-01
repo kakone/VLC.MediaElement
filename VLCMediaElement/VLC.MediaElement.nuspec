@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>VLC.MediaElement</id>
-    <version>3.1.0</version>
+    <version>3.1.0.1</version>
     <authors>Stéphane Mitermite</authors>
     <owners>Stéphane Mitermite</owners>
     <licenseUrl>https://github.com/kakone/VLC.MediaElement/blob/master/LICENSE</licenseUrl>
@@ -13,7 +13,7 @@
     <copyright>Copyright © 2018 Stéphane Mitermite</copyright>
     <tags>vlc libvlc mediaelement player video audio</tags>
     <dependencies>
-      <dependency id="libVLCX" version="3.1.0" />
+      <dependency id="libVLCX" version="3.1.0.1" />
       <dependency id="Nito.AsyncEx" version="4.0.1" />
     </dependencies>
     <contentFiles>
