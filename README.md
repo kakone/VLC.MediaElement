@@ -1,3 +1,5 @@
+# :warning: This repository is no longer updated, use [LibVLCSharp](https://github.com/videolan/libvlcsharp) instead.
+
 # VLC.MediaElement for UWP
 MediaElement clone powered by VLC.
 
